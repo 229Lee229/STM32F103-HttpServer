@@ -1,0 +1,108 @@
+# 编译生成的目标文件
+*.o
+*.obj
+*.elf
+*.hex
+*.bin
+*.map
+
+# 可执行文件
+*.exe
+*.out
+*.app
+
+# 静态库和动态库
+*.a
+*.lib
+*.so
+*.so.*
+*.dylib
+*.dll
+
+# 调试文件
+*.dSYM/
+*.su
+*.idb
+*.pdb
+
+# 预编译头文件
+*.gch
+*.pch
+
+# 链接器输出
+*.ilk
+*.exp
+
+# 依赖文件
+*.d
+*.dep
+
+# 构建目录
+build/
+Build/
+debug/
+Debug/
+release/
+Release/
+out/
+bin/
+obj/
+
+# IDE和编辑器相关
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Makefile生成的文件
+Makefile.in
+.deps/
+.libs/
+
+# Autotools生成的文件
+autom4te.cache/
+config.log
+config.status
+configure
+
+# CMake生成的文件
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+*.cmake
+!CMakeLists.txt
+
+# 日志和临时文件
+*.log
+*.tmp
+*.temp
+
+# Keil MDK
+*.uvguix.*
+*.uvopt
+*.bak
+*.dep
+*.axf
+
+# IAR EWARM
+*.ewt
+*.dep
+settings/
+Debug/
+Release/
+
+# CubeMX生成的临时文件
+*.ioc.bak
+Drivers/CMSIS/
+Drivers/STM32*
+
+# JLink相关
+JLinkLog.txt
+
+MDK-ARM/STM32F103-http-test
+MDK-ARM/RTE
+MDK-ARM/DebugConfig
+*.lst
+*.scvd
