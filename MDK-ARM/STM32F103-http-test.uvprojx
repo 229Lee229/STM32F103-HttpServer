@@ -336,7 +336,7 @@
               <MiscControls>--fpmode=fast</MiscControls>
               <Define>USE_HAL_DRIVER,STM32F103xE</Define>
               <Undefine></Undefine>
-              <IncludePath>../Core/Inc;../Drivers/STM32F1xx_HAL_Driver/Inc;../Drivers/STM32F1xx_HAL_Driver/Inc/Legacy;../Drivers/CMSIS/Device/ST/STM32F1xx/Include;../Drivers/CMSIS/Include;../Ethernet/;../Ethernet/W5500/;../Internet/httpServer/;../My_Hardware/</IncludePath>
+              <IncludePath>../Core/Inc;../Drivers/STM32F1xx_HAL_Driver/Inc;../Drivers/STM32F1xx_HAL_Driver/Inc/Legacy;../Drivers/CMSIS/Device/ST/STM32F1xx/Include;../Drivers/CMSIS/Include;../Internet/httpServer/;../Ethernet/;../Ethernet/W5500/;../My_Hardware/</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -548,6 +548,41 @@
           </Files>
         </Group>
         <Group>
+          <GroupName>Internet/httpServer</GroupName>
+          <Files>
+            <File>
+              <FileName>httpParser.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Internet\httpServer\httpParser.c</FilePath>
+            </File>
+            <File>
+              <FileName>httpParser.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\Internet\httpServer\httpParser.h</FilePath>
+            </File>
+            <File>
+              <FileName>httpServer.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Internet\httpServer\httpServer.c</FilePath>
+            </File>
+            <File>
+              <FileName>httpServer.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\Internet\httpServer\httpServer.h</FilePath>
+            </File>
+            <File>
+              <FileName>httpUtil.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Internet\httpServer\httpUtil.c</FilePath>
+            </File>
+            <File>
+              <FileName>httpUtil.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\Internet\httpServer\httpUtil.h</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
           <GroupName>Ethernet/W5500</GroupName>
           <Files>
             <File>
@@ -584,41 +619,6 @@
               <FileName>wizchip_conf.h</FileName>
               <FileType>5</FileType>
               <FilePath>..\Ethernet\wizchip_conf.h</FilePath>
-            </File>
-          </Files>
-        </Group>
-        <Group>
-          <GroupName>Internet/httpServer</GroupName>
-          <Files>
-            <File>
-              <FileName>httpParser.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\Internet\httpServer\httpParser.c</FilePath>
-            </File>
-            <File>
-              <FileName>httpParser.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>..\Internet\httpServer\httpParser.h</FilePath>
-            </File>
-            <File>
-              <FileName>httpServer.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\Internet\httpServer\httpServer.c</FilePath>
-            </File>
-            <File>
-              <FileName>httpServer.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>..\Internet\httpServer\httpServer.h</FilePath>
-            </File>
-            <File>
-              <FileName>httpUtil.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\Internet\httpServer\httpUtil.c</FilePath>
-            </File>
-            <File>
-              <FileName>httpUtil.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>..\Internet\httpServer\httpUtil.h</FilePath>
             </File>
           </Files>
         </Group>

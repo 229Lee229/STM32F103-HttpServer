@@ -13,7 +13,8 @@
 #include <string.h>
 #include <stdlib.h>
 #include "httpUtil.h"
-
+#include "main.h"
+#include "wizchip_conf.h"
 uint8_t http_get_cgi_handler(uint8_t * uri_name, uint8_t * buf, uint32_t * file_len) {
     uint8_t ret = HTTP_OK;
     uint16_t len = 0;
@@ -55,8 +56,43 @@ uint8_t http_post_cgi_handler(uint8_t * uri_name, st_http_request * p_http_reque
     }
     return ret;
 }
+extern wiz_NetInfo gWIZNETINFO;
 
 uint8_t predefined_get_cgi_processor(uint8_t * uri_name, uint8_t * buf, uint16_t * len) {
+	uint8_t ret = HTTP_OK;
+
+    // ??1:?? /status.cgi,?????? JSON
+    if (strcmp((char*)uri_name, "status.cgi") == 0)
+    {
+        *len = sprintf((char*)buf,
+            "{"
+            "\"uptime\": 300h,"
+            "\"voltage\": 221V,"
+            "\"current\": 12A"
+            "}"
+            // HAL_GetTick() / 1000   // ????(?)
+         //   g_modbus_data.voltage, // ?????????????
+         //   g_modbus_data.current
+        );
+        return ret;
+    }
+
+    // ??2:?? /config.cgi,??????
+    if (strcmp((char*)uri_name, "config.cgi") == 0)
+    {
+        *len = sprintf((char*)buf,
+            "{"
+            "\"ip\": \"%d.%d.%d.%d\","
+            "\"device_id\": \"DM1000-001\""
+            "}",
+            gWIZNETINFO.ip[0], gWIZNETINFO.ip[1],
+            gWIZNETINFO.ip[2], gWIZNETINFO.ip[3]
+        );
+        return ret;
+    }
+
+    // ??????,?? 0 ?????(??????????)
+    return 0;
     ;
 }
 

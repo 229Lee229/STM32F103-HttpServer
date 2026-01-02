@@ -1,5 +1,10 @@
 #include "main.h"
-#include "W5500.H"
+#include "w5500.h"
+#include "wizchip_conf.h"
+extern void my_wizchip_spi_writebyte(uint8_t wb);
+extern uint8_t my_wizchip_spi_readbyte(void);
+
+
 /**
   * @brief  ?????
   * @retval None
@@ -42,5 +47,5 @@ void register_wizchip()
 	reg_wizchip_cs_cbfunc(SPI_CS_Select, SPI_CS_Deselect);
 	
 	/* SPI Read & Write callback function */
-	// reg_wizchip_spi_cbfunc(SPI1_ReadByte, SPI1_WriteByte);  
+	reg_wizchip_spi_cbfunc(my_wizchip_spi_readbyte, my_wizchip_spi_writebyte);  
 }

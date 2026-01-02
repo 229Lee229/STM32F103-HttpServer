@@ -22,6 +22,8 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "httpServer.h"
+#include "httpParser.h"
+#include "httpUtil.h"
 #include "w5500.h"
 #include "socket.h"
 
@@ -48,6 +50,8 @@
 /* Private variables ---------------------------------------------------------*/
 SPI_HandleTypeDef hspi1;
 
+TIM_HandleTypeDef htim2;
+
 UART_HandleTypeDef huart3;
 
 /* USER CODE BEGIN PV */
@@ -59,6 +63,7 @@ void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_SPI1_Init(void);
 static void MX_USART3_UART_Init(void);
+static void MX_TIM2_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -66,6 +71,8 @@ static void MX_USART3_UART_Init(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 #define RING_BUF_SIZE 2048  // ?? SRAM ??,F103 ?? 1~4KB
+uint8_t my_wizchip_spi_readbyte(void);
+void my_wizchip_spi_writebyte(uint8_t wb);
 
 typedef struct
 {
@@ -189,6 +196,163 @@ void ProcessLongString(void)
         }
     }
 }
+
+
+/**
+  * @brief  TIM2 ????????
+  *         ?????? Period ?????
+  */
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
+{
+    if (htim == &htim2)  // ????????(????????????)
+    {
+        // ?????????
+        // ??:?? LED?????????
+		printf("Ready.\r\n");
+    }
+}
+
+/**
+  * @brief  SPI ????(????)
+  * @param  data: ????????
+  * @param  len: ????
+  * @retval HAL_OK: ??
+  */
+HAL_StatusTypeDef SPI_Transmit(uint8_t* data, uint16_t len)
+{
+    return HAL_SPI_Transmit(&hspi1, data, len, HAL_MAX_DELAY);
+}
+
+/**
+  * @brief  SPI ????(????)
+  * @param  data: ???????
+  * @param  len: ??????
+  * @retval HAL_OK: ??
+  */
+HAL_StatusTypeDef SPI_Receive(uint8_t* data, uint16_t len)
+{
+    return HAL_SPI_Receive(&hspi1, data, len, HAL_MAX_DELAY);
+}
+
+/**
+  * @brief  SPI ???????(???!W5500 ????????)
+  * @param  tx_data: ??????(????,?? 0xFF)
+  * @param  rx_data: ???????
+  * @param  len: ????
+  * @retval HAL_OK: ??
+  */
+HAL_StatusTypeDef SPI_TransmitReceive(uint8_t* tx_data, uint8_t* rx_data, uint16_t len)
+{
+    return HAL_SPI_TransmitReceive(&hspi1, tx_data, rx_data, len, HAL_MAX_DELAY);
+}
+
+
+/**
+  * @brief  ??? W5500 SPI ?????
+  * @retval ??????
+  */
+uint8_t my_wizchip_spi_readbyte(void)
+{
+    uint8_t rx_byte = 0xFF;  // dummy byte
+    HAL_SPI_TransmitReceive(&hspi1, &rx_byte, &rx_byte, 1, HAL_MAX_DELAY);
+    return rx_byte;
+}
+
+/**
+  * @brief  ??? W5500 SPI ?????
+  * @param  wb: ?????
+  */
+void my_wizchip_spi_writebyte(uint8_t wb)
+{
+    HAL_SPI_Transmit(&hspi1, &wb, 1, HAL_MAX_DELAY);
+}
+
+
+
+wiz_NetInfo gWIZNETINFO;
+wiz_NetInfo netinfo;			// readback
+void Load_Net_Parameters(void)
+{
+	gWIZNETINFO.gw[0] = 192; //Gateway
+	gWIZNETINFO.gw[1] = 168;
+	gWIZNETINFO.gw[2] = 101;
+	gWIZNETINFO.gw[3] = 1;
+
+	gWIZNETINFO.sn[0]=255; //Mask
+	gWIZNETINFO.sn[1]=255;
+	gWIZNETINFO.sn[2]=255;
+	gWIZNETINFO.sn[3]=0;
+
+	gWIZNETINFO.mac[0]=0x0c; //MAC
+	gWIZNETINFO.mac[1]=0x29;
+	gWIZNETINFO.mac[2]=0xab;
+	gWIZNETINFO.mac[3]=0x7c;
+	gWIZNETINFO.mac[4]=0x00;
+	gWIZNETINFO.mac[5]=0x03;
+
+	gWIZNETINFO.ip[0]=192; //IP
+	gWIZNETINFO.ip[1]=168;
+	gWIZNETINFO.ip[2]=101;
+	gWIZNETINFO.ip[3]=101;
+	
+	gWIZNETINFO.dns[0] = 8;
+	gWIZNETINFO.dns[1] = 8;
+	gWIZNETINFO.dns[2] = 8;
+	gWIZNETINFO.dns[3] = 8;	
+	gWIZNETINFO.dhcp = NETINFO_STATIC;
+}
+
+
+#define HTTP_SOCKET			0
+#define MAX_HTTPSOCK		1
+#define HTTP_TX_BUF_SIZE	2048
+#define HTTP_RX_BUF_SIZE	2048
+
+static uint8_t http_tx_buf[HTTP_TX_BUF_SIZE];
+static uint8_t http_rx_buf[HTTP_RX_BUF_SIZE];
+static uint8_t http_socket_num[MAX_HTTPSOCK] = {HTTP_SOCKET};
+
+
+
+const uint8_t http_index_html[] = 
+"<html><head><title>W5500 HTTP Server</title></head>"
+"<body><h1>Hello from STM32 + W5500   :)	!</h1>"
+"<p>Current time: %s</p></body></html>";
+const uint16_t http_index_html_len = sizeof(http_index_html) - 1;  // ?????\0
+
+
+// Define a simple index.html content (uint8_t array)
+const uint8_t index_html[] = {
+    '<', '!', 'D', 'O', 'C', 'T', 'Y', 'P', 'E', ' ', 'h', 't', 'm', 'l', '>', '\r', '\n',
+    '<', 'h', 't', 'm', 'l', '>', '\r', '\n',
+    '<', 'h', 'e', 'a', 'd', '>', '<', 't', 'i', 't', 'l', 'e', '>', 'W', '5', '5', '0', '0', ' ', 'S', 'e', 'r', 'v', 'e', 'r', '<', '/', 't', 'i', 't', 'l', 'e', '>', '<', '/', 'h', 'e', 'a', 'd', '>', '\r', '\n',
+    '<', 'b', 'o', 'd', 'y', '>', '\r', '\n',
+    '<', 'h', '1', '>', 'H', 'e', 'l', 'l', 'o', ' ', 'f', 'r', 'o', 'm', ' ', 'A', 'P', 'M', '3', '2', ' ', '+', ' ', 'W', '5', '5', '0', '0', '!', '<', '/', 'h', '1', '>', '\r', '\n',
+    '<', 'p', '>', 'T', 'h', 'i', 's', ' ', 'i', 's', ' ', 'a', ' ', 'c', 'u', 's', 't', 'o', 'm', ' ', 'p', 'a', 'g', 'e', '.', '<', '/', 'p', '>', '\r', '\n',
+    '<', '/', 'b', 'o', 'd', 'y', '>', '\r', '\n',
+    '<', '/', 'h', 't', 'm', 'l', '>', '\0'
+};
+
+// 1. ??????(? index.html ??)
+const uint8_t index_html_content[] = 
+"<!DOCTYPE html>\r\n"
+"<html><head><title>My Device</title></head>\r\n"
+"<body>\r\n"
+"<h1>Hello! W5500 HTTP Server is running.</h1>\r\n"
+"<p>Current time: 2026-01-02</p>\r\n"
+"<a href=\"/data.json\">View real-time data (JSON)</a>\r\n"
+"</body></html>\r\n";
+
+// 2. ?? JSON ????
+const uint8_t data_json_content[] = 
+"{\r\n"
+"  \"voltage\": 220.45,\r\n"
+"  \"current\": 5.12,\r\n"
+"  \"power\": 1125.4,\r\n"
+"  \"timestamp\": \"2026-01-02 14:30:00\"\r\n"
+"}\r\n";
+
+
 /* USER CODE END 0 */
 
 /**
@@ -222,17 +386,96 @@ int main(void)
   MX_GPIO_Init();
   MX_SPI1_Init();
   MX_USART3_UART_Init();
-  HAL_UART_Receive_IT(&huart3, &rx_byte, 1);  // ??????
-
+  MX_TIM2_Init();
   /* USER CODE BEGIN 2 */
-	uint8_t tx_buf_size[8] = {8, 4, 2, 2, 0, 0, 0, 0};  // Socket0: 8KB TX, Socket1: 4KB, Socket2: 2KB...
-    uint8_t rx_buf_size[8] = {8, 4, 2, 2, 0, 0, 0, 0};  // ?? RX
+  HAL_UART_Receive_IT(&huart3, &rx_byte, 1);  // rx_byte ??? uint8_t
+  HAL_TIM_Base_Start_IT(&htim2);
+  uint8_t memsize[2][8] = { {2,2,2,2,2,2,2,2},{2,2,2,2,2,2,2,2}};
+//	uint8_t tx_buf_size[8] = {8, 4, 2, 2, 0, 0, 0, 0};  // Socket0: 8KB TX, Socket1: 4KB, Socket2: 2KB...
+//    uint8_t rx_buf_size[8] = {8, 4, 2, 2, 0, 0, 0, 0};  // ?? RX
+	// wizchip_init(memsize[0], memsize[1]);
+	register_wizchip();
+	
+	uint8_t read_mac[6];
+	getSHAR(read_mac);  // ioLibrary_Driver ?????
 
-//    if(wizchip_init(tx_buf_size, rx_buf_size) != 0)
-//    {
-//        // ?????,????????
-//        while(1);
-//    }
+printf("Current MAC: %02X:%02X:%02X:%02X:%02X:%02X\r\n",
+       read_mac[0], read_mac[1], read_mac[2],
+       read_mac[3], read_mac[4], read_mac[5]);
+	
+	Load_Net_Parameters();
+	 setSHAR(gWIZNETINFO.mac);
+		getSHAR(read_mac);  // ioLibrary_Driver ?????
+
+printf("AfterCurrent MAC: %02X:%02X:%02X:%02X:%02X:%02X\r\n",
+       read_mac[0], read_mac[1], read_mac[2],
+       read_mac[3], read_mac[4], read_mac[5]);
+
+  /* WIZCHIP SOCKET Buffer initialize */
+  
+  // uint8_t memsize[2][8] = {{2,2,2,2,2,2,2,2},{2,2,2,2,2,2,2,2}};  // ?????
+
+if(ctlwizchip(CW_INIT_WIZCHIP, (void*)memsize) == -1)
+{
+    printf("WIZCHIP Initialized fail.\r\n");
+    while(1);
+}
+printf("WIZCHIP Initialized success.\r\n");
+//  if(ctlwizchip(0, (void*)memsize) == -1){
+//    printf("WIZCHIP Initialized fail.\r\n");
+//    while(1);
+//  }
+
+	uint8_t read_ip[4];
+
+	getSIPR(read_ip);
+printf("Current IP: %02d:%02d:%02d:%02d\r\n",
+       read_ip[0], read_ip[1], read_ip[2],
+       read_ip[3]);
+
+
+
+	setSIPR(gWIZNETINFO.ip);
+	getSIPR(read_ip);
+	printf("AfterCurrent IP: %02d:%02d:%02d:%02d\r\n",
+       read_ip[0], read_ip[1], read_ip[2],
+       read_ip[3]);
+
+
+	wizchip_setnetinfo(&gWIZNETINFO);
+	
+	wizchip_getnetinfo(&netinfo);
+	
+	
+	printf("Current network info:\r\n");
+printf("MAC : %02X:%02X:%02X:%02X:%02X:%02X\r\n",
+       netinfo.mac[0], netinfo.mac[1], netinfo.mac[2],
+       netinfo.mac[3], netinfo.mac[4], netinfo.mac[5]);
+
+printf("IP  : %d.%d.%d.%d\r\n",
+       netinfo.ip[0], netinfo.ip[1], netinfo.ip[2], netinfo.ip[3]);
+
+printf("SN  : %d.%d.%d.%d\r\n",
+       netinfo.sn[0], netinfo.sn[1], netinfo.sn[2], netinfo.sn[3]);
+
+printf("GW  : %d.%d.%d.%d\r\n",
+       netinfo.gw[0], netinfo.gw[1], netinfo.gw[2], netinfo.gw[3]);
+
+printf("DNS : %d.%d.%d.%d\r\n",
+       netinfo.dns[0], netinfo.dns[1], netinfo.dns[2], netinfo.dns[3]);
+	
+	
+	
+	
+	// ctlnetwork();
+	
+	
+	httpServer_init(http_tx_buf, http_rx_buf, MAX_HTTPSOCK, http_socket_num);
+	// reg_httpServer_webpage((uint8_t*)http_index_html);
+	// set_httpServer_webcontent((uint8_t*)"index.html", (uint8_t*)http_index_html);
+	// reg_httpServer_webContent((uint8_t*)"index.html", (uint8_t*)http_index_html);
+	reg_httpServer_webContent((uint8_t*)"index.html", (uint8_t*)index_html_content);
+reg_httpServer_webContent((uint8_t*)"data.json",  (uint8_t*)data_json_content);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -243,9 +486,10 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+	  httpServer_run(http_socket_num[0]);  
 	  	// UART_SendString("Hello from STM32!\r\n");
-	printf("Hello 2026!");
-	HAL_Delay(500);
+	// printf("Hello 2026!");
+	// HAL_Delay(500);
 	  ProcessLongString();
   }
   /* USER CODE END 3 */
@@ -263,10 +507,13 @@ void SystemClock_Config(void)
   /** Initializes the RCC Oscillators according to the specified parameters
   * in the RCC_OscInitTypeDef structure.
   */
-  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;
+  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE;
+  RCC_OscInitStruct.HSEState = RCC_HSE_ON;
+  RCC_OscInitStruct.HSEPredivValue = RCC_HSE_PREDIV_DIV1;
   RCC_OscInitStruct.HSIState = RCC_HSI_ON;
-  RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
-  RCC_OscInitStruct.PLL.PLLState = RCC_PLL_NONE;
+  RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
+  RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
+  RCC_OscInitStruct.PLL.PLLMUL = RCC_PLL_MUL9;
   if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
   {
     Error_Handler();
@@ -276,15 +523,19 @@ void SystemClock_Config(void)
   */
   RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
                               |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
-  RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_HSI;
+  RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
   RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
-  RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV1;
+  RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV2;
   RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
 
-  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_0) != HAL_OK)
+  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_2) != HAL_OK)
   {
     Error_Handler();
   }
+
+  /** Enables the Clock Security System
+  */
+  HAL_RCC_EnableCSS();
 }
 
 /**
@@ -322,6 +573,51 @@ static void MX_SPI1_Init(void)
   /* USER CODE BEGIN SPI1_Init 2 */
 
   /* USER CODE END SPI1_Init 2 */
+
+}
+
+/**
+  * @brief TIM2 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_TIM2_Init(void)
+{
+
+  /* USER CODE BEGIN TIM2_Init 0 */
+
+  /* USER CODE END TIM2_Init 0 */
+
+  TIM_ClockConfigTypeDef sClockSourceConfig = {0};
+  TIM_MasterConfigTypeDef sMasterConfig = {0};
+
+  /* USER CODE BEGIN TIM2_Init 1 */
+
+  /* USER CODE END TIM2_Init 1 */
+  htim2.Instance = TIM2;
+  htim2.Init.Prescaler = 7199;
+  htim2.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim2.Init.Period = 9999;
+  htim2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim2.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;
+  if (HAL_TIM_Base_Init(&htim2) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
+  if (HAL_TIM_ConfigClockSource(&htim2, &sClockSourceConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+  if (HAL_TIMEx_MasterConfigSynchronization(&htim2, &sMasterConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN TIM2_Init 2 */
+
+  /* USER CODE END TIM2_Init 2 */
 
 }
 
@@ -370,6 +666,7 @@ static void MX_GPIO_Init(void)
 /* USER CODE END MX_GPIO_Init_1 */
 
   /* GPIO Ports Clock Enable */
+  __HAL_RCC_GPIOD_CLK_ENABLE();
   __HAL_RCC_GPIOA_CLK_ENABLE();
   __HAL_RCC_GPIOC_CLK_ENABLE();
   __HAL_RCC_GPIOB_CLK_ENABLE();
