@@ -71,7 +71,7 @@ void Error_Handler(void);
 #define W5500_INT_GPIO_Port GPIOB
 
 /* USER CODE BEGIN Private defines */
-
+#define W5500_SPI_HANDLE       hspi1
 /* USER CODE END Private defines */
 
 #ifdef __cplusplus

@@ -55,6 +55,8 @@ TIM_HandleTypeDef htim2;
 UART_HandleTypeDef huart3;
 
 /* USER CODE BEGIN PV */
+SPI_HandleTypeDef * const p_hspi_w5500 = &hspi1;
+// SPI_HandlePtr hspi_w5500 = &hspi1;   // 用于 W5500
 
 /* USER CODE END PV */
 
@@ -247,29 +249,10 @@ HAL_StatusTypeDef SPI_TransmitReceive(uint8_t* tx_data, uint8_t* rx_data, uint16
 }
 
 
-/**
-  * @brief  ??? W5500 SPI ?????
-  * @retval ??????
-  */
-uint8_t my_wizchip_spi_readbyte(void)
-{
-    uint8_t rx_byte = 0xFF;  // dummy byte
-    HAL_SPI_TransmitReceive(&hspi1, &rx_byte, &rx_byte, 1, HAL_MAX_DELAY);
-    return rx_byte;
-}
-
-/**
-  * @brief  ??? W5500 SPI ?????
-  * @param  wb: ?????
-  */
-void my_wizchip_spi_writebyte(uint8_t wb)
-{
-    HAL_SPI_Transmit(&hspi1, &wb, 1, HAL_MAX_DELAY);
-}
 
 
 
-wiz_NetInfo gWIZNETINFO;
+wiz_NetInfo gWIZNETINFO;		// setINFO
 wiz_NetInfo netinfo;			// readback
 void Load_Net_Parameters(void)
 {
@@ -288,12 +271,12 @@ void Load_Net_Parameters(void)
 	gWIZNETINFO.mac[2]=0xab;
 	gWIZNETINFO.mac[3]=0x7c;
 	gWIZNETINFO.mac[4]=0x00;
-	gWIZNETINFO.mac[5]=0x03;
+	gWIZNETINFO.mac[5]=0x09;
 
 	gWIZNETINFO.ip[0]=192; //IP
 	gWIZNETINFO.ip[1]=168;
 	gWIZNETINFO.ip[2]=101;
-	gWIZNETINFO.ip[3]=101;
+	gWIZNETINFO.ip[3]=99;
 	
 	gWIZNETINFO.dns[0] = 8;
 	gWIZNETINFO.dns[1] = 8;
@@ -352,7 +335,13 @@ const uint8_t data_json_content[] =
 "  \"timestamp\": \"2026-01-02 14:30:00\"\r\n"
 "}\r\n";
 
-
+const uint8_t data_json_content2[] = 
+"{\r\n"
+"  \"Example\": a,\r\n"
+"  \"Example\": b,\r\n"
+"  \"Name\": King,\r\n"
+"  \"timestamp\": \"2026-01-02 23:30:00\"\r\n"
+"}\r\n";
 /* USER CODE END 0 */
 
 /**
@@ -391,25 +380,26 @@ int main(void)
   HAL_UART_Receive_IT(&huart3, &rx_byte, 1);  // rx_byte ??? uint8_t
   HAL_TIM_Base_Start_IT(&htim2);
   uint8_t memsize[2][8] = { {2,2,2,2,2,2,2,2},{2,2,2,2,2,2,2,2}};
-//	uint8_t tx_buf_size[8] = {8, 4, 2, 2, 0, 0, 0, 0};  // Socket0: 8KB TX, Socket1: 4KB, Socket2: 2KB...
-//    uint8_t rx_buf_size[8] = {8, 4, 2, 2, 0, 0, 0, 0};  // ?? RX
-	// wizchip_init(memsize[0], memsize[1]);
+
 	register_wizchip();
-	
-	uint8_t read_mac[6];
-	getSHAR(read_mac);  // ioLibrary_Driver ?????
-
-printf("Current MAC: %02X:%02X:%02X:%02X:%02X:%02X\r\n",
-       read_mac[0], read_mac[1], read_mac[2],
-       read_mac[3], read_mac[4], read_mac[5]);
-	
 	Load_Net_Parameters();
-	 setSHAR(gWIZNETINFO.mac);
-		getSHAR(read_mac);  // ioLibrary_Driver ?????
+	
+	  
+	  
+//	  uint8_t read_mac[6];
+//	getSHAR(read_mac);  // ioLibrary_Driver ?????
 
-printf("AfterCurrent MAC: %02X:%02X:%02X:%02X:%02X:%02X\r\n",
-       read_mac[0], read_mac[1], read_mac[2],
-       read_mac[3], read_mac[4], read_mac[5]);
+//printf("Current MAC: %02X:%02X:%02X:%02X:%02X:%02X\r\n",
+//       read_mac[0], read_mac[1], read_mac[2],
+//       read_mac[3], read_mac[4], read_mac[5]);
+//	
+//	
+//	 setSHAR(gWIZNETINFO.mac);
+//		getSHAR(read_mac);  // ioLibrary_Driver ?????
+
+//printf("AfterCurrent MAC: %02X:%02X:%02X:%02X:%02X:%02X\r\n",
+//       read_mac[0], read_mac[1], read_mac[2],
+//       read_mac[3], read_mac[4], read_mac[5]);
 
   /* WIZCHIP SOCKET Buffer initialize */
   
@@ -428,18 +418,18 @@ printf("WIZCHIP Initialized success.\r\n");
 
 	uint8_t read_ip[4];
 
-	getSIPR(read_ip);
-printf("Current IP: %02d:%02d:%02d:%02d\r\n",
-       read_ip[0], read_ip[1], read_ip[2],
-       read_ip[3]);
+//	getSIPR(read_ip);
+//printf("Current IP: %02d:%02d:%02d:%02d\r\n",
+//       read_ip[0], read_ip[1], read_ip[2],
+//       read_ip[3]);
 
 
 
-	setSIPR(gWIZNETINFO.ip);
-	getSIPR(read_ip);
-	printf("AfterCurrent IP: %02d:%02d:%02d:%02d\r\n",
-       read_ip[0], read_ip[1], read_ip[2],
-       read_ip[3]);
+//	setSIPR(gWIZNETINFO.ip);
+//	getSIPR(read_ip);
+//	printf("AfterCurrent IP: %02d:%02d:%02d:%02d\r\n",
+//       read_ip[0], read_ip[1], read_ip[2],
+//       read_ip[3]);
 
 
 	wizchip_setnetinfo(&gWIZNETINFO);
@@ -475,7 +465,9 @@ printf("DNS : %d.%d.%d.%d\r\n",
 	// set_httpServer_webcontent((uint8_t*)"index.html", (uint8_t*)http_index_html);
 	// reg_httpServer_webContent((uint8_t*)"index.html", (uint8_t*)http_index_html);
 	reg_httpServer_webContent((uint8_t*)"index.html", (uint8_t*)index_html_content);
-reg_httpServer_webContent((uint8_t*)"data.json",  (uint8_t*)data_json_content);
+	reg_httpServer_webContent((uint8_t*)"data.json",  (uint8_t*)data_json_content);
+	//		reg_httpServer_webContent((uint8_t*)"example.cgi",  (uint8_t*)data_json_content2);
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
