@@ -1,17 +1,13 @@
 #ifndef __MYDRV_H
 #define __MYDRV_H
-// #include "wizchip_conf.h"
 
 #include "main.h"
 
-//extern SPI_HandleTypeDef hspi1;
-//extern SPI_HandleTypeDef hspi2;
-//extern SPI_HandleTypeDef hspi3;
+// Debugging phase: To quickly verify whether communication is working properly, use blocking mode.
+#define SPI_TIMEOUT_BLOCKING	
 
-/* 使用指针常量作为别名（类型安全） */
-
-/* 或者直接定义指针变量 */
-// extern SPI_HandleTypeDef * const pW5500Spi;   // 指向hspi1的指针常量
+// Safe phase
+#define SPI_TIMEOUT_SAFE
 
 /**
 

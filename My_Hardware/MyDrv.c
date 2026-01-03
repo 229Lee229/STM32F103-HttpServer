@@ -2,9 +2,9 @@
 #include "main.h"
 #include "w5500.h"
 #include "wizchip_conf.h"
-extern SPI_HandleTypeDef * const p_hspi_w5500;
-// extern SPI_HandleTypeDef hspi1;
-// SPI_HandleTypeDef * const pW5500Spi = &hspi1;
+extern SPI_HandleTypeDef * const p_hspi_w5500;		// An external definition of \
+													   SPI_HandleTypeDef * const p_hspi_w5500 = &hspi1 is required.
+
 /**
 
 * @brief W5500 SPI single-byte read callback function
@@ -22,8 +22,27 @@ extern SPI_HandleTypeDef * const p_hspi_w5500;
 */
 uint8_t my_wizchip_spi_readbyte(void)
 {
+	// Note: CS has already been pulled low in the critical section macro of the library, so no manual control is needed here.
     uint8_t rx_byte = 0xFF;  // dummy byte
-    HAL_SPI_TransmitReceive(p_hspi_w5500, &rx_byte, &rx_byte, 1, HAL_MAX_DELAY);
+
+#if defined(SPI_TIMEOUT_BLOCKING)
+	// Blocking mode: No timeout (used during debugging; risk: W5500 may freeze due to an anomaly).
+	HAL_SPI_TransmitReceive(p_hspi_w5500, &rx_byte, &rx_byte, 1, HAL_MAX_DELAY);
+#elif defined(SPI_TIMEOUT_SAFE) || !defined(SPI_TIMEOUT_BLOCKING)
+	// Safe mode: 100ms timeout (highly recommended for production environments)
+	if (HAL_SPI_TransmitReceive(p_hspi_w5500, &rx_byte, &rx_byte, 1, 100) != HAL_OK)
+    {
+        // Optional: Record the number of errors
+        // static uint32_t spi_err_cnt = 0;
+        // spi_err_cnt++;
+        // printf("SPI read timeout/error\r\n");
+        return 0xFF;  // return invalid
+    }
+#else	
+	// default safe mode
+	HAL_SPI_TransmitReceive(p_hspi_w5500, &rx_byte, &rx_byte, 1, 100);
+
+#endif	
     return rx_byte;
 }
 
@@ -44,7 +63,19 @@ uint8_t my_wizchip_spi_readbyte(void)
 */
 void my_wizchip_spi_writebyte(uint8_t wb)
 {
+	// Note: CS has already been pulled low in the critical section macro of the library, so no manual control is needed here.
+#if defined(SPI_TIMEOUT_BLOCKING)
     HAL_SPI_Transmit(p_hspi_w5500, &wb, 1, HAL_MAX_DELAY);
+#elif defined(SPI_TIMEOUT_SAFE) || !defined(SPI_TIMEOUT_BLOCKING)
+    if (HAL_SPI_Transmit(p_hspi_w5500, &wb, 1, 100) != HAL_OK)
+    {
+        // Optional: Record the number of errors
+        // printf("SPI write timeout/error\r\n");
+    }
+#else
+	// default safe mode 
+    HAL_SPI_Transmit(&hspi1, &wb, 1, 100);
+#endif	
 }
 
 

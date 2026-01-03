@@ -56,7 +56,6 @@ UART_HandleTypeDef huart3;
 
 /* USER CODE BEGIN PV */
 SPI_HandleTypeDef * const p_hspi_w5500 = &hspi1;
-// SPI_HandlePtr hspi_w5500 = &hspi1;   // 用于 W5500
 
 /* USER CODE END PV */
 
@@ -319,7 +318,7 @@ const uint8_t index_html[] = {
 };
 
 // 1. ??????(? index.html ??)
-const uint8_t index_html_content[] = 
+ const uint8_t index_html_content[] = 
 "<!DOCTYPE html>\r\n"
 "<html><head><title>My Device</title></head>\r\n"
 "<body>\r\n"
