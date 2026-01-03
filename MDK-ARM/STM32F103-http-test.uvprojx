@@ -336,7 +336,7 @@
               <MiscControls>--fpmode=fast</MiscControls>
               <Define>USE_HAL_DRIVER,STM32F103xE</Define>
               <Undefine></Undefine>
-              <IncludePath>../Core/Inc;../Drivers/STM32F1xx_HAL_Driver/Inc;../Drivers/STM32F1xx_HAL_Driver/Inc/Legacy;../Drivers/CMSIS/Device/ST/STM32F1xx/Include;../Drivers/CMSIS/Include;../Internet/httpServer/;../Ethernet/;../Ethernet/W5500/;../My_Hardware/</IncludePath>
+              <IncludePath>../Core/Inc;../Drivers/STM32F1xx_HAL_Driver/Inc;../Drivers/STM32F1xx_HAL_Driver/Inc/Legacy;../Drivers/CMSIS/Device/ST/STM32F1xx/Include;../Drivers/CMSIS/Include;../Internet/httpServer/;../Ethernet/;../Ethernet/W5500/;../My_Hardware/;../My_debug</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -634,6 +634,16 @@
               <FileName>MyDrv.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\My_Hardware\MyDrv.c</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>My_debug</GroupName>
+          <Files>
+            <File>
+              <FileName>My_debug.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\My_debug\My_debug.h</FilePath>
             </File>
           </Files>
         </Group>

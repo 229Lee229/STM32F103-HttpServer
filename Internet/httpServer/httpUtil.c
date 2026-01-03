@@ -38,7 +38,7 @@ uint8_t http_get_cgi_handler(uint8_t * uri_name, uint8_t * buf, uint32_t * file_
 }
 
 
-/* 
+
 uint8_t http_post_cgi_handler(uint8_t * uri_name, st_http_request * p_http_request, uint8_t * buf, uint32_t * file_len) {
     uint8_t ret = HTTP_OK;
     uint16_t len = 0;
@@ -60,9 +60,9 @@ uint8_t http_post_cgi_handler(uint8_t * uri_name, st_http_request * p_http_reque
     }
     return ret;
 }
-*/
 
-uint8_t http_post_cgi_handler(uint8_t * uri_name, 
+
+/* uint8_t http_post_cgi_handler(uint8_t * uri_name, 
                               st_http_request * p_http_request, 
                               uint8_t * buf, 
                               uint32_t * file_len)
@@ -106,20 +106,20 @@ uint8_t http_post_cgi_handler(uint8_t * uri_name,
     return ret;
 
 }
-
+*/
 
 extern wiz_NetInfo gWIZNETINFO;
 
 uint8_t predefined_get_cgi_processor(uint8_t * uri_name, uint8_t * buf, uint16_t * len) {
 	uint8_t ret = HTTP_OK;
 
-    // ??1:?? /status.cgi,?????? JSON
-    if ( (strcmp((char*)uri_name, "status") == 0) || (strcmp((char*)uri_name, "status.cgi") == 0) )
+    // only accept status.cgi
+    if ( (strcmp((char*)uri_name, "status/") == 0) || (strcmp((char*)uri_name, "status.cgi") == 0) )
     {
         *len = sprintf((char*)buf,
 			"{"
             "\"device\":\"APM32+W5500\","
-            "\"uptime_ms\":%ud,"
+            "\"uptime_ms\":%u,"
             "\"free_heap\":%u,"   // 如果有 heap 信息
             "\"ip\":\"%d.%d.%d.%d\""
             "}",
@@ -150,7 +150,55 @@ uint8_t predefined_get_cgi_processor(uint8_t * uri_name, uint8_t * buf, uint16_t
     ;
 }
 
-uint8_t predefined_set_cgi_processor(uint8_t * uri_name, uint8_t * uri, uint8_t * buf, uint16_t * en) {
+// extern uint8_t http_rx_buf[HTTP_RX_BUF_SIZE];
+uint8_t predefined_set_cgi_processor(uint8_t * uri_name, uint8_t * uri, uint8_t * buf, uint16_t * len) {
+	
+	// uint8_t *body_ptr = get_http_rx_buffer() + 100;
+	// uint16_t body_len = 600;           // 实际长度需解析
+// 匹配你要处理的 POST 路径
+    if (strcmp((char*)uri_name, "api.cgi") == 0 ||
+        strcmp((char*)uri_name, "post.cgi") == 0 ||
+        strcmp((char*)uri_name, "config.cgi") == 0)
+    {
+		
+		
+		
+        // Print debug info
+		LOG_DEBUG("Http Post request debug:\r\n");
+        printf("POST CGI Handler triggered for: %s\r\n", uri_name);
+        printf("Full URI: %s\r\n", uri);
+		printf("end\r\n");
+        // 注意：POST Body 数据通常在库的全局 rx_buf 中
+        // 这里我们假设 Body 内容已经被库放入 buf 开头（常见情况）
+        // 实际长度需要从其他方式获取，或通过调试观察
+
+        // 示例：简单回显收到的数据（用于测试）
+        // 假设 Body 长度已知或通过 Content-Length 头解析（库未提供时可估算）
+        *len = sprintf((char*)buf,
+            "{"
+            "\"status\":\"success\","
+            "\"message\":\"POST request processed\","
+            "\"received_uri\":\"%s\","
+            "\"method\":\"POST\""
+            "}",
+            uri_name
+        );
+
+        // TODO: 在这里添加真实业务逻辑
+        // 例如：
+        // - 解析 JSON 配置并保存到 Flash
+        // - 控制继电器开/关
+        // - 修改设备参数
+        // - 返回实时电表数据
+
+        // 示例：模拟处理成功
+//        printf("Simulating POST data processing...\r\n");
+//		printf("Received POST Body (%d bytes): %.*s\r\n", body_len, body_len, body_ptr);
+        return HTTP_OK;  // 必须返回 HTTP_OK 表示已处理
+    }
+
+    // 未匹配任何路径，返回 0（库会返回 404）
+    return 0;
     ;
 }
 
@@ -195,5 +243,4 @@ uint8_t predefined_set_cgi_processor(uint8_t * uri_name, uint8_t * uri, uint8_t 
 //    // 未匹配路径，返回 0 让库处理其他逻辑
 //    return 0;
 //}
-
 

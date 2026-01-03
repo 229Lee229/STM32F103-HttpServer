@@ -286,16 +286,18 @@ void Load_Net_Parameters(void)
 }
 
 
-#define HTTP_SOCKET			0
-#define MAX_HTTPSOCK		1
-#define HTTP_TX_BUF_SIZE	2048
-#define HTTP_RX_BUF_SIZE	2048
+
 
 static uint8_t http_tx_buf[HTTP_TX_BUF_SIZE];
 static uint8_t http_rx_buf[HTTP_RX_BUF_SIZE];
 static uint8_t http_socket_num[MAX_HTTPSOCK] = {HTTP_SOCKET};
 
-
+uint8_t * get_http_rx_buffer(void){
+	return http_rx_buf;
+}
+uint16_t  get_http_rx_buffer_size(void){
+	return HTTP_RX_BUF_SIZE;
+}
 
 const uint8_t http_index_html[] = 
 "<html><head><title>W5500 HTTP Server</title></head>"
@@ -368,7 +370,6 @@ int main(void)
   SystemClock_Config();
 
   /* USER CODE BEGIN SysInit */
-
   /* USER CODE END SysInit */
 
   /* Initialize all configured peripherals */
@@ -376,6 +377,10 @@ int main(void)
   MX_SPI1_Init();
   MX_USART3_UART_Init();
   MX_TIM2_Init();
+  
+     LOG_INFO("program start.");
+    
+
   /* USER CODE BEGIN 2 */
   HAL_UART_Receive_IT(&huart3, &rx_byte, 1);  // rx_byte ??? uint8_t
   HAL_TIM_Base_Start_IT(&htim2);
@@ -466,6 +471,8 @@ printf("DNS : %d.%d.%d.%d\r\n",
 	// reg_httpServer_webContent((uint8_t*)"index.html", (uint8_t*)http_index_html);
 	reg_httpServer_webContent((uint8_t*)"index.html", (uint8_t*)index_html_content);
 	reg_httpServer_webContent((uint8_t*)"data.json",  (uint8_t*)data_json_content);
+	// reg_httpServer_webContent((uint8_t*)"status",  (uint8_t*)data_json_content2);
+
 	//		reg_httpServer_webContent((uint8_t*)"example.cgi",  (uint8_t*)data_json_content2);
 
   /* USER CODE END 2 */

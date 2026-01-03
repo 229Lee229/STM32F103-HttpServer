@@ -53,7 +53,9 @@ extern "C" {
 void Error_Handler(void);
 
 /* USER CODE BEGIN EFP */
-
+uint8_t * get_http_rx_buffer(void);
+uint16_t  get_http_rx_buffer_size(void);
+#include "My_debug.h"
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
@@ -72,6 +74,10 @@ void Error_Handler(void);
 
 /* USER CODE BEGIN Private defines */
 #define W5500_SPI_HANDLE       hspi1
+#define HTTP_SOCKET			0
+#define MAX_HTTPSOCK		1
+#define HTTP_TX_BUF_SIZE	2048
+#define HTTP_RX_BUF_SIZE	2048
 /* USER CODE END Private defines */
 
 #ifdef __cplusplus
