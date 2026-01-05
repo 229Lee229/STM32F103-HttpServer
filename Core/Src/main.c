@@ -28,7 +28,7 @@
 #include "socket.h"
 
 #include "wizchip_conf.h"
-#include "MyDrv.h"
+#include "Conf_SPI_W5500.h"
 #include "stdio.h"
 /* USER CODE END Includes */
 

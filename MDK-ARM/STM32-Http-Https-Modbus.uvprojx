@@ -7,7 +7,7 @@
 
   <Targets>
     <Target>
-      <TargetName>STM32F103-http-test</TargetName>
+      <TargetName>STM32-Http-Https-Modbus</TargetName>
       <ToolsetNumber>0x4</ToolsetNumber>
       <ToolsetName>ARM-ADS</ToolsetName>
       <pCCUsed>5060528::V5.06 update 5 (build 528)::ARMCC</pCCUsed>
@@ -137,7 +137,7 @@
             <DriverSelection>4101</DriverSelection>
           </Flash1>
           <bUseTDR>1</bUseTDR>
-          <Flash2>BIN\UL2V8M.DLL</Flash2>
+          <Flash2>BIN\UL2CM3.DLL</Flash2>
           <Flash3>"" ()</Flash3>
           <Flash4></Flash4>
           <pFcarmOut></pFcarmOut>
@@ -626,14 +626,14 @@
           <GroupName>My_Hardware</GroupName>
           <Files>
             <File>
-              <FileName>MyDrv.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>..\My_Hardware\MyDrv.h</FilePath>
+              <FileName>Conf_SPI_W5500.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\My_Hardware\Conf_SPI_W5500.c</FilePath>
             </File>
             <File>
-              <FileName>MyDrv.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\My_Hardware\MyDrv.c</FilePath>
+              <FileName>Conf_SPI_W5500.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\My_Hardware\Conf_SPI_W5500.h</FilePath>
             </File>
           </Files>
         </Group>
@@ -660,7 +660,7 @@
       <component Cclass="CMSIS" Cgroup="CORE" Cvendor="ARM" Cversion="4.3.0" condition="CMSIS Core">
         <package name="CMSIS" schemaVersion="1.3" url="http://www.keil.com/pack/" vendor="ARM" version="4.5.0"/>
         <targetInfos>
-          <targetInfo name="STM32F103-http-test"/>
+          <targetInfo name="STM32-Http-Https-Modbus"/>
         </targetInfos>
       </component>
     </components>

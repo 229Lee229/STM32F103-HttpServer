@@ -1,0 +1,73 @@
+<html>
+<body>
+<pre>
+<h1>µVision Build Log</h1>
+<h2>Tool Versions:</h2>
+IDE-Version: ¦ÌVision V5.24.2.0
+Copyright (C) 2017 ARM Ltd and ARM Germany GmbH. All rights reserved.
+License Information: mikasa Lee, mikasa, LIC=MPPLD-82BU0-63EMB-2SZY6-4GU9V-BF715
+ 
+Tool Versions:
+Toolchain:       MDK-ARM Plus  Version: 5.24.1
+Toolchain Path:  D:\Keil5_2\Keil5\ARM\ARMCC\Bin
+C Compiler:      Armcc.exe V5.06 update 5 (build 528)
+Assembler:       Armasm.exe V5.06 update 5 (build 528)
+Linker/Locator:  ArmLink.exe V5.06 update 5 (build 528)
+Library Manager: ArmAr.exe V5.06 update 5 (build 528)
+Hex Converter:   FromElf.exe V5.06 update 5 (build 528)
+CPU DLL:         SARMCM3.DLL V5.24.1
+Dialog DLL:      DCM.DLL V1.16.0.0
+Target DLL:      STLink\ST-LINKIII-KEIL_SWO.dll V3.0.1.0
+Dialog DLL:      TCM.DLL V1.32.0.0
+ 
+<h2>Project:</h2>
+F:\My files\aa-Electric meter\STM32F103-Http-test\STM32F103-http-test\MDK-ARM\STM32F103-http-test.uvprojx
+Project File Date:  01/03/2026
+
+<h2>Output:</h2>
+*** Using Compiler 'V5.06 update 5 (build 528)', folder: 'D:\Keil5_2\Keil5\ARM\ARMCC\Bin'
+Build target 'STM32F103-http-test'
+compiling MyDrv.c...
+../My_debug/My_debug.h(65): warning:  #1-D: last line of file ends without a newline
+  #endif /* __DEBUG_H */
+..\My_Hardware\MyDrv.h(57): warning:  #1295-D: Deprecated declaration register_wizchip - give arg types
+  void register_wizchip();
+..\My_Hardware\MyDrv.c: 2 warnings, 0 errors
+compiling main.c...
+../My_debug/My_debug.h(65): warning:  #1-D: last line of file ends without a newline
+  #endif /* __DEBUG_H */
+../My_Hardware/MyDrv.h(57): warning:  #1295-D: Deprecated declaration register_wizchip - give arg types
+  void register_wizchip();
+../Core/Src/main.c(423): warning:  #177-D: variable "read_ip"  was declared but never referenced
+  	uint8_t read_ip[4];
+../Core/Src/main.c: 3 warnings, 0 errors
+linking...
+Program Size: Code=19756 RO-data=2120 RW-data=148 ZI-data=13500  
+FromELF: creating hex file...
+"STM32F103-http-test\STM32F103-http-test.axf" - 0 Error(s), 5 Warning(s).
+
+<h2>Software Packages used:</h2>
+
+Package Vendor: ARM
+                http://www.keil.com/pack/ARM.CMSIS.5.0.1.pack
+                ARM.CMSIS.5.0.1
+                CMSIS (Cortex Microcontroller Software Interface Standard)
+   * Component: CORE Version: 5.0.1
+
+Package Vendor: Keil
+                http://www.keil.com/pack/Keil.STM32F1xx_DFP.2.2.0.pack
+                Keil.STM32F1xx_DFP.2.2.0
+                STMicroelectronics STM32F1 Series Device Support, Drivers and Examples
+
+<h2>Collection of Component include folders:</h2>
+  .\RTE\_STM32F103-http-test
+  D:\Keil5_2\Keil5\ARM\PACK\ARM\CMSIS\5.0.1\CMSIS\Include
+  D:\Keil5_2\Keil5\ARM\PACK\Keil\STM32F1xx_DFP\2.2.0\Device\Include
+
+<h2>Collection of Component Files used:</h2>
+
+   * Component: ARM::CMSIS:CORE:5.0.1
+Build Time Elapsed:  00:00:02
+</pre>
+</body>
+</html>

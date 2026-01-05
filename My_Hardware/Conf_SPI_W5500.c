@@ -1,4 +1,4 @@
-#include "MyDrv.h"
+#include "Conf_SPI_W5500.h"
 #include "main.h"
 #include "w5500.h"
 #include "wizchip_conf.h"
@@ -6,19 +6,12 @@ extern SPI_HandleTypeDef * const p_hspi_w5500;		// An external definition of \
 													   SPI_HandleTypeDef * const p_hspi_w5500 = &hspi1 is required.
 
 /**
-
 * @brief W5500 SPI single-byte read callback function
-
 * @note Reads a byte from the W5500 by sending a dummy byte (0xFF).
-
 * This function is automatically called by the ioLibrary_Driver library on all register/buffer read operations.
-
 * Must be used in pair with my_wizchip_spi_writebyte and executed within a critical section (CS pulled low).
-
 * @param None
-
 * @retval uint8_t Byte data read from the W5500
-
 */
 uint8_t my_wizchip_spi_readbyte(void)
 {
@@ -47,19 +40,12 @@ uint8_t my_wizchip_spi_readbyte(void)
 }
 
 /**
-
 * @brief W5500 SPI single-byte write callback function
-
 * @note Sends a byte of data to the W5500.
-
 * This function is automatically called by the ioLibrary_Driver library on all register/buffer write operations.
-
 * Must be used in pair with my_wizchip_spi_readbyte and executed within a critical section (CS pulled low).
-
 * @param wb The byte of data to write to the W5500
-
 * @retval None
-
 */
 void my_wizchip_spi_writebyte(uint8_t wb)
 {
