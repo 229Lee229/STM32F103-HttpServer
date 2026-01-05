@@ -102,6 +102,7 @@ Drivers/STM32*
 JLinkLog.txt
 
 MDK-ARM/STM32F103-http-test
+MDK-ARM/STM32-Http-Https-Modbus
 MDK-ARM/RTE
 MDK-ARM/DebugConfig
 *.lst
