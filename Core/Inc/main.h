@@ -69,6 +69,8 @@ uint16_t  get_http_rx_buffer_size(void);
 #define W5500_MOSI_GPIO_Port GPIOA
 #define W5500_RST_Pin GPIO_PIN_4
 #define W5500_RST_GPIO_Port GPIOC
+#define LED_Status_Pin GPIO_PIN_5
+#define LED_Status_GPIO_Port GPIOC
 #define W5500_INT_Pin GPIO_PIN_1
 #define W5500_INT_GPIO_Port GPIOB
 

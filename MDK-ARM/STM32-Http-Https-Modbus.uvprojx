@@ -10,7 +10,7 @@
       <TargetName>STM32-Http-Https-Modbus</TargetName>
       <ToolsetNumber>0x4</ToolsetNumber>
       <ToolsetName>ARM-ADS</ToolsetName>
-      <pCCUsed>5060528::V5.06 update 5 (build 528)::ARMCC</pCCUsed>
+      <pCCUsed>5060960::V5.06 update 7 (build 960)::.\ARMCOMPLIER506</pCCUsed>
       <uAC6>0</uAC6>
       <TargetOption>
         <TargetCommonOption>
@@ -18,12 +18,12 @@
           <Vendor>STMicroelectronics</Vendor>
           <PackID>Keil.STM32F1xx_DFP.2.2.0</PackID>
           <PackURL>http://www.keil.com/pack/</PackURL>
-          <Cpu>IRAM(0x20000000-0x2000FFFF) IROM(0x8000000-0x807FFFF) CLOCK(8000000) CPUTYPE("Cortex-M3") TZ</Cpu>
+          <Cpu>IRAM(0x20000000,0x10000) IROM(0x08000000,0x80000) CPUTYPE("Cortex-M3") CLOCK(12000000) ELITTLE</Cpu>
           <FlashUtilSpec></FlashUtilSpec>
           <StartupFile></StartupFile>
-          <FlashDriverDll></FlashDriverDll>
+          <FlashDriverDll>UL2CM3(-S0 -C0 -P0 -FD20000000 -FC1000 -FN1 -FF0STM32F10x_512 -FS08000000 -FL080000 -FP0($$Device:STM32F103RE$Flash\STM32F10x_512.FLM))</FlashDriverDll>
           <DeviceId>0</DeviceId>
-          <RegisterFile></RegisterFile>
+          <RegisterFile>$$Device:STM32F103RE$Device\Include\stm32f10x.h</RegisterFile>
           <MemoryEnv></MemoryEnv>
           <Cmp></Cmp>
           <Asm></Asm>
@@ -81,7 +81,7 @@
           </BeforeMake>
           <AfterMake>
             <RunUserProg1>0</RunUserProg1>
-            <RunUserProg2>1</RunUserProg2>
+            <RunUserProg2>0</RunUserProg2>
             <UserProg1Name></UserProg1Name>
             <UserProg2Name></UserProg2Name>
             <UserProg1Dos16Mode>0</UserProg1Dos16Mode>
@@ -138,7 +138,7 @@
           </Flash1>
           <bUseTDR>1</bUseTDR>
           <Flash2>BIN\UL2CM3.DLL</Flash2>
-          <Flash3>"" ()</Flash3>
+          <Flash3></Flash3>
           <Flash4></Flash4>
           <pFcarmOut></pFcarmOut>
           <pFcarmGrp></pFcarmGrp>
@@ -184,6 +184,9 @@
             <hadXRAM>0</hadXRAM>
             <uocXRam>0</uocXRam>
             <RvdsVP>0</RvdsVP>
+            <RvdsMve>0</RvdsMve>
+            <RvdsCdeCp>0</RvdsCdeCp>
+            <nBranchProt>0</nBranchProt>
             <hadIRAM2>0</hadIRAM2>
             <hadIROM2>0</hadIROM2>
             <StupSel>8</StupSel>
@@ -192,7 +195,7 @@
             <uLtcg>0</uLtcg>
             <nSecure>0</nSecure>
             <RoSelD>3</RoSelD>
-            <RwSelD>4</RwSelD>
+            <RwSelD>3</RwSelD>
             <CodeSel>0</CodeSel>
             <OptFeed>0</OptFeed>
             <NoZi1>0</NoZi1>
@@ -324,9 +327,10 @@
             <uThumb>0</uThumb>
             <uSurpInc>0</uSurpInc>
             <uC99>1</uC99>
+            <uGnu>0</uGnu>
             <useXO>0</useXO>
-            <v6Lang>5</v6Lang>
-            <v6LangP>3</v6LangP>
+            <v6Lang>3</v6Lang>
+            <v6LangP>0</v6LangP>
             <vShortEn>1</vShortEn>
             <vShortWch>1</vShortWch>
             <v6Lto>0</v6Lto>
@@ -336,7 +340,7 @@
               <MiscControls>--fpmode=fast</MiscControls>
               <Define>USE_HAL_DRIVER,STM32F103xE</Define>
               <Undefine></Undefine>
-              <IncludePath>../Core/Inc;../Drivers/STM32F1xx_HAL_Driver/Inc;../Drivers/STM32F1xx_HAL_Driver/Inc/Legacy;../Drivers/CMSIS/Device/ST/STM32F1xx/Include;../Drivers/CMSIS/Include;../Internet/httpServer/;../Ethernet/;../Ethernet/W5500/;../My_Hardware/;../My_debug</IncludePath>
+              <IncludePath>../Core/Inc;../Drivers/STM32F1xx_HAL_Driver/Inc;../Drivers/STM32F1xx_HAL_Driver/Inc/Legacy;../Drivers/CMSIS/Device/ST/STM32F1xx;../Drivers/CMSIS/Include;../Drivers/Module_driver;../Drivers/Middlewares;../Drivers/Middlewares/Third_Party;../Drivers/Middlewares/Third_Party/Ethernet;../Drivers/Middlewares/Third_Party/Ethernet/W5500;../Drivers/Middlewares/Third_Party/Internet;../Drivers/Middlewares/Third_Party/Internet/httpServer;../Drivers/CMSIS/Device/ST/STM32F1xx/Include;..\Drivers\Middlewares\Third_Party\libmodbus</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -349,7 +353,7 @@
             <NoWarn>0</NoWarn>
             <uSurpInc>0</uSurpInc>
             <useXO>0</useXO>
-            <uClangAs>0</uClangAs>
+            <ClangAsOpt>4</ClangAsOpt>
             <VariousControls>
               <MiscControls></MiscControls>
               <Define></Define>
@@ -394,6 +398,230 @@
               <FileName>main.c</FileName>
               <FileType>1</FileType>
               <FilePath>../Core/Src/main.c</FilePath>
+            </File>
+            <File>
+              <FileName>gpio.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>../Core/Src/gpio.c</FilePath>
+              <FileOption>
+                <CommonProperty>
+                  <UseCPPCompiler>2</UseCPPCompiler>
+                  <RVCTCodeConst>0</RVCTCodeConst>
+                  <RVCTZI>0</RVCTZI>
+                  <RVCTOtherData>0</RVCTOtherData>
+                  <ModuleSelection>0</ModuleSelection>
+                  <IncludeInBuild>1</IncludeInBuild>
+                  <AlwaysBuild>2</AlwaysBuild>
+                  <GenerateAssemblyFile>2</GenerateAssemblyFile>
+                  <AssembleAssemblyFile>2</AssembleAssemblyFile>
+                  <PublicsOnly>2</PublicsOnly>
+                  <StopOnExitCode>11</StopOnExitCode>
+                  <CustomArgument></CustomArgument>
+                  <IncludeLibraryModules></IncludeLibraryModules>
+                  <ComprImg>1</ComprImg>
+                </CommonProperty>
+                <FileArmAds>
+                  <Cads>
+                    <interw>2</interw>
+                    <Optim>0</Optim>
+                    <oTime>2</oTime>
+                    <SplitLS>2</SplitLS>
+                    <OneElfS>2</OneElfS>
+                    <Strict>2</Strict>
+                    <EnumInt>2</EnumInt>
+                    <PlainCh>2</PlainCh>
+                    <Ropi>2</Ropi>
+                    <Rwpi>2</Rwpi>
+                    <wLevel>0</wLevel>
+                    <uThumb>2</uThumb>
+                    <uSurpInc>2</uSurpInc>
+                    <uC99>2</uC99>
+                    <uGnu>2</uGnu>
+                    <useXO>2</useXO>
+                    <v6Lang>0</v6Lang>
+                    <v6LangP>0</v6LangP>
+                    <vShortEn>2</vShortEn>
+                    <vShortWch>2</vShortWch>
+                    <v6Lto>2</v6Lto>
+                    <v6WtE>2</v6WtE>
+                    <v6Rtti>2</v6Rtti>
+                    <VariousControls>
+                      <MiscControls></MiscControls>
+                      <Define></Define>
+                      <Undefine></Undefine>
+                      <IncludePath></IncludePath>
+                    </VariousControls>
+                  </Cads>
+                </FileArmAds>
+              </FileOption>
+            </File>
+            <File>
+              <FileName>spi.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>../Core/Src/spi.c</FilePath>
+              <FileOption>
+                <CommonProperty>
+                  <UseCPPCompiler>2</UseCPPCompiler>
+                  <RVCTCodeConst>0</RVCTCodeConst>
+                  <RVCTZI>0</RVCTZI>
+                  <RVCTOtherData>0</RVCTOtherData>
+                  <ModuleSelection>0</ModuleSelection>
+                  <IncludeInBuild>1</IncludeInBuild>
+                  <AlwaysBuild>2</AlwaysBuild>
+                  <GenerateAssemblyFile>2</GenerateAssemblyFile>
+                  <AssembleAssemblyFile>2</AssembleAssemblyFile>
+                  <PublicsOnly>2</PublicsOnly>
+                  <StopOnExitCode>11</StopOnExitCode>
+                  <CustomArgument></CustomArgument>
+                  <IncludeLibraryModules></IncludeLibraryModules>
+                  <ComprImg>1</ComprImg>
+                </CommonProperty>
+                <FileArmAds>
+                  <Cads>
+                    <interw>2</interw>
+                    <Optim>0</Optim>
+                    <oTime>2</oTime>
+                    <SplitLS>2</SplitLS>
+                    <OneElfS>2</OneElfS>
+                    <Strict>2</Strict>
+                    <EnumInt>2</EnumInt>
+                    <PlainCh>2</PlainCh>
+                    <Ropi>2</Ropi>
+                    <Rwpi>2</Rwpi>
+                    <wLevel>0</wLevel>
+                    <uThumb>2</uThumb>
+                    <uSurpInc>2</uSurpInc>
+                    <uC99>2</uC99>
+                    <uGnu>2</uGnu>
+                    <useXO>2</useXO>
+                    <v6Lang>0</v6Lang>
+                    <v6LangP>0</v6LangP>
+                    <vShortEn>2</vShortEn>
+                    <vShortWch>2</vShortWch>
+                    <v6Lto>2</v6Lto>
+                    <v6WtE>2</v6WtE>
+                    <v6Rtti>2</v6Rtti>
+                    <VariousControls>
+                      <MiscControls></MiscControls>
+                      <Define></Define>
+                      <Undefine></Undefine>
+                      <IncludePath></IncludePath>
+                    </VariousControls>
+                  </Cads>
+                </FileArmAds>
+              </FileOption>
+            </File>
+            <File>
+              <FileName>tim.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>../Core/Src/tim.c</FilePath>
+              <FileOption>
+                <CommonProperty>
+                  <UseCPPCompiler>2</UseCPPCompiler>
+                  <RVCTCodeConst>0</RVCTCodeConst>
+                  <RVCTZI>0</RVCTZI>
+                  <RVCTOtherData>0</RVCTOtherData>
+                  <ModuleSelection>0</ModuleSelection>
+                  <IncludeInBuild>1</IncludeInBuild>
+                  <AlwaysBuild>2</AlwaysBuild>
+                  <GenerateAssemblyFile>2</GenerateAssemblyFile>
+                  <AssembleAssemblyFile>2</AssembleAssemblyFile>
+                  <PublicsOnly>2</PublicsOnly>
+                  <StopOnExitCode>11</StopOnExitCode>
+                  <CustomArgument></CustomArgument>
+                  <IncludeLibraryModules></IncludeLibraryModules>
+                  <ComprImg>1</ComprImg>
+                </CommonProperty>
+                <FileArmAds>
+                  <Cads>
+                    <interw>2</interw>
+                    <Optim>0</Optim>
+                    <oTime>2</oTime>
+                    <SplitLS>2</SplitLS>
+                    <OneElfS>2</OneElfS>
+                    <Strict>2</Strict>
+                    <EnumInt>2</EnumInt>
+                    <PlainCh>2</PlainCh>
+                    <Ropi>2</Ropi>
+                    <Rwpi>2</Rwpi>
+                    <wLevel>0</wLevel>
+                    <uThumb>2</uThumb>
+                    <uSurpInc>2</uSurpInc>
+                    <uC99>2</uC99>
+                    <uGnu>2</uGnu>
+                    <useXO>2</useXO>
+                    <v6Lang>0</v6Lang>
+                    <v6LangP>0</v6LangP>
+                    <vShortEn>2</vShortEn>
+                    <vShortWch>2</vShortWch>
+                    <v6Lto>2</v6Lto>
+                    <v6WtE>2</v6WtE>
+                    <v6Rtti>2</v6Rtti>
+                    <VariousControls>
+                      <MiscControls></MiscControls>
+                      <Define></Define>
+                      <Undefine></Undefine>
+                      <IncludePath></IncludePath>
+                    </VariousControls>
+                  </Cads>
+                </FileArmAds>
+              </FileOption>
+            </File>
+            <File>
+              <FileName>usart.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>../Core/Src/usart.c</FilePath>
+              <FileOption>
+                <CommonProperty>
+                  <UseCPPCompiler>2</UseCPPCompiler>
+                  <RVCTCodeConst>0</RVCTCodeConst>
+                  <RVCTZI>0</RVCTZI>
+                  <RVCTOtherData>0</RVCTOtherData>
+                  <ModuleSelection>0</ModuleSelection>
+                  <IncludeInBuild>1</IncludeInBuild>
+                  <AlwaysBuild>2</AlwaysBuild>
+                  <GenerateAssemblyFile>2</GenerateAssemblyFile>
+                  <AssembleAssemblyFile>2</AssembleAssemblyFile>
+                  <PublicsOnly>2</PublicsOnly>
+                  <StopOnExitCode>11</StopOnExitCode>
+                  <CustomArgument></CustomArgument>
+                  <IncludeLibraryModules></IncludeLibraryModules>
+                  <ComprImg>1</ComprImg>
+                </CommonProperty>
+                <FileArmAds>
+                  <Cads>
+                    <interw>2</interw>
+                    <Optim>0</Optim>
+                    <oTime>2</oTime>
+                    <SplitLS>2</SplitLS>
+                    <OneElfS>2</OneElfS>
+                    <Strict>2</Strict>
+                    <EnumInt>2</EnumInt>
+                    <PlainCh>2</PlainCh>
+                    <Ropi>2</Ropi>
+                    <Rwpi>2</Rwpi>
+                    <wLevel>0</wLevel>
+                    <uThumb>2</uThumb>
+                    <uSurpInc>2</uSurpInc>
+                    <uC99>2</uC99>
+                    <uGnu>2</uGnu>
+                    <useXO>2</useXO>
+                    <v6Lang>0</v6Lang>
+                    <v6LangP>0</v6LangP>
+                    <vShortEn>2</vShortEn>
+                    <vShortWch>2</vShortWch>
+                    <v6Lto>2</v6Lto>
+                    <v6WtE>2</v6WtE>
+                    <v6Rtti>2</v6Rtti>
+                    <VariousControls>
+                      <MiscControls></MiscControls>
+                      <Define></Define>
+                      <Undefine></Undefine>
+                      <IncludePath></IncludePath>
+                    </VariousControls>
+                  </Cads>
+                </FileArmAds>
+              </FileOption>
             </File>
             <File>
               <FileName>stm32f1xx_it.c</FileName>
@@ -517,6 +745,7 @@
                     <uThumb>2</uThumb>
                     <uSurpInc>2</uSurpInc>
                     <uC99>2</uC99>
+                    <uGnu>2</uGnu>
                     <useXO>2</useXO>
                     <v6Lang>0</v6Lang>
                     <v6LangP>0</v6LangP>
@@ -548,102 +777,87 @@
           </Files>
         </Group>
         <Group>
-          <GroupName>Internet/httpServer</GroupName>
-          <Files>
-            <File>
-              <FileName>httpParser.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\Internet\httpServer\httpParser.c</FilePath>
-            </File>
-            <File>
-              <FileName>httpParser.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>..\Internet\httpServer\httpParser.h</FilePath>
-            </File>
-            <File>
-              <FileName>httpServer.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\Internet\httpServer\httpServer.c</FilePath>
-            </File>
-            <File>
-              <FileName>httpServer.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>..\Internet\httpServer\httpServer.h</FilePath>
-            </File>
-            <File>
-              <FileName>httpUtil.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\Internet\httpServer\httpUtil.c</FilePath>
-            </File>
-            <File>
-              <FileName>httpUtil.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>..\Internet\httpServer\httpUtil.h</FilePath>
-            </File>
-          </Files>
-        </Group>
-        <Group>
-          <GroupName>Ethernet/W5500</GroupName>
-          <Files>
-            <File>
-              <FileName>w5500.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\Ethernet\W5500\w5500.c</FilePath>
-            </File>
-            <File>
-              <FileName>w5500.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>..\Ethernet\W5500\w5500.h</FilePath>
-            </File>
-          </Files>
-        </Group>
-        <Group>
-          <GroupName>Ethernet</GroupName>
-          <Files>
-            <File>
-              <FileName>socket.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\Ethernet\socket.c</FilePath>
-            </File>
-            <File>
-              <FileName>socket.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>..\Ethernet\socket.h</FilePath>
-            </File>
-            <File>
-              <FileName>wizchip_conf.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\Ethernet\wizchip_conf.c</FilePath>
-            </File>
-            <File>
-              <FileName>wizchip_conf.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>..\Ethernet\wizchip_conf.h</FilePath>
-            </File>
-          </Files>
-        </Group>
-        <Group>
-          <GroupName>My_Hardware</GroupName>
+          <GroupName>Drivers/Module_driver</GroupName>
           <Files>
             <File>
               <FileName>Conf_SPI_W5500.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\My_Hardware\Conf_SPI_W5500.c</FilePath>
+              <FilePath>..\Drivers\Module_driver\Conf_SPI_W5500.c</FilePath>
             </File>
             <File>
-              <FileName>Conf_SPI_W5500.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>..\My_Hardware\Conf_SPI_W5500.h</FilePath>
+              <FileName>My_debug.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Drivers\Module_driver\My_debug.c</FilePath>
+            </File>
+            <File>
+              <FileName>uart_device.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Drivers\Module_driver\uart_device.c</FilePath>
             </File>
           </Files>
         </Group>
         <Group>
-          <GroupName>My_debug</GroupName>
+          <GroupName>Drivers/Middlewares/Third_Party/Internet/httpServer</GroupName>
           <Files>
             <File>
-              <FileName>My_debug.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>..\My_debug\My_debug.h</FilePath>
+              <FileName>socket.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Drivers\Middlewares\Third_Party\Ethernet\socket.c</FilePath>
+            </File>
+            <File>
+              <FileName>wizchip_conf.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Drivers\Middlewares\Third_Party\Ethernet\wizchip_conf.c</FilePath>
+            </File>
+            <File>
+              <FileName>w5500.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Drivers\Middlewares\Third_Party\Ethernet\W5500\w5500.c</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>Drivers/Middlewares/Third_Party/Ethernet</GroupName>
+          <Files>
+            <File>
+              <FileName>httpParser.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Drivers\Middlewares\Third_Party\Internet\httpServer\httpParser.c</FilePath>
+            </File>
+            <File>
+              <FileName>httpServer.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Drivers\Middlewares\Third_Party\Internet\httpServer\httpServer.c</FilePath>
+            </File>
+            <File>
+              <FileName>httpUtil.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Drivers\Middlewares\Third_Party\Internet\httpServer\httpUtil.c</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>libmodbus</GroupName>
+          <Files>
+            <File>
+              <FileName>errno.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Drivers\Middlewares\Third_Party\libmodbus\errno.c</FilePath>
+            </File>
+            <File>
+              <FileName>modbus.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Drivers\Middlewares\Third_Party\libmodbus\modbus.c</FilePath>
+            </File>
+            <File>
+              <FileName>modbus-data.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Drivers\Middlewares\Third_Party\libmodbus\modbus-data.c</FilePath>
+            </File>
+            <File>
+              <FileName>modbus-st-rtu.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Drivers\Middlewares\Third_Party\libmodbus\modbus-st-rtu.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -657,8 +871,8 @@
   <RTE>
     <apis/>
     <components>
-      <component Cclass="CMSIS" Cgroup="CORE" Cvendor="ARM" Cversion="4.3.0" condition="CMSIS Core">
-        <package name="CMSIS" schemaVersion="1.3" url="http://www.keil.com/pack/" vendor="ARM" version="4.5.0"/>
+      <component Cclass="CMSIS" Cgroup="CORE" Cvendor="ARM" Cversion="6.1.0" condition="ARMv6_7_8-M Device">
+        <package name="CMSIS" schemaVersion="1.7.36" url="https://www.keil.com/pack/" vendor="ARM" version="6.1.0"/>
         <targetInfos>
           <targetInfo name="STM32-Http-Https-Modbus"/>
         </targetInfos>
@@ -666,5 +880,14 @@
     </components>
     <files/>
   </RTE>
+
+  <LayerInfo>
+    <Layers>
+      <Layer>
+        <LayName>STM32-Http-Https-Modbus</LayName>
+        <LayPrjMark>1</LayPrjMark>
+      </Layer>
+    </Layers>
+  </LayerInfo>
 
 </Project>

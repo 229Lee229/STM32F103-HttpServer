@@ -18,6 +18,10 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "spi.h"
+#include "tim.h"
+#include "usart.h"
+#include "gpio.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -30,6 +34,9 @@
 #include "wizchip_conf.h"
 #include "Conf_SPI_W5500.h"
 #include "stdio.h"
+
+// libmodbus ...
+
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -48,11 +55,6 @@
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
-SPI_HandleTypeDef hspi1;
-
-TIM_HandleTypeDef htim2;
-
-UART_HandleTypeDef huart3;
 
 /* USER CODE BEGIN PV */
 SPI_HandleTypeDef * const p_hspi_w5500 = &hspi1;
@@ -61,10 +63,6 @@ SPI_HandleTypeDef * const p_hspi_w5500 = &hspi1;
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
-static void MX_GPIO_Init(void);
-static void MX_SPI1_Init(void);
-static void MX_USART3_UART_Init(void);
-static void MX_TIM2_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -115,14 +113,14 @@ uint8_t rx_byte;
 // ??? printf ? UART3
 int __io_putchar(int ch)
 {
-    HAL_UART_Transmit(&huart3, (uint8_t *)&ch, 1, HAL_MAX_DELAY);
+    HAL_UART_Transmit(&huart2, (uint8_t *)&ch, 1, HAL_MAX_DELAY);
     return ch;
 }
 
 // ???? Keil ???? fputc(???????)
 int fputc(int ch, FILE *f)
 {
-    HAL_UART_Transmit(&huart3, (uint8_t *)&ch, 1, HAL_MAX_DELAY);
+    HAL_UART_Transmit(&huart2, (uint8_t *)&ch, 1, HAL_MAX_DELAY);
     return ch;
 }
 
@@ -137,7 +135,7 @@ HAL_StatusTypeDef UART_SendString(const char* str)
     uint16_t len = 0;
     while (str[len] != '\0') len++;  // ???????
 
-    return HAL_UART_Transmit(&huart3, (uint8_t*)str, len, HAL_MAX_DELAY);  // ????
+    return HAL_UART_Transmit(&huart2, (uint8_t*)str, len, HAL_MAX_DELAY);  // ????
 }
 
 /**
@@ -169,6 +167,22 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
         // ??????
 		
         HAL_UART_Receive_IT(&huart3, &rx_byte, 1);
+    }
+	else if (huart == &huart1)
+    {
+		RingBuffer_Write(rx_byte);
+        // ?????? rx_byte
+        // ??????
+		
+        HAL_UART_Receive_IT(&huart1, &rx_byte, 1);
+    }
+	else if (huart == &huart2)
+    {
+		RingBuffer_Write(rx_byte);
+        // ?????? rx_byte
+        // ??????
+		
+        HAL_UART_Receive_IT(&huart2, &rx_byte, 1);
     }
 }
 
@@ -209,7 +223,8 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
     {
         // ?????????
         // ??:?? LED?????????
-		printf("Ready.\r\n");
+		printf("keep going.\r\n");
+		HAL_GPIO_TogglePin(GPIOC,GPIO_PIN_5);
     }
 }
 
@@ -376,19 +391,25 @@ int main(void)
   MX_SPI1_Init();
   MX_USART3_UART_Init();
   MX_TIM2_Init();
-  
-     LOG_INFO("program start.");
-    
-
+  MX_USART1_UART_Init();
+  MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
+#ifdef Debug_ETH  
   HAL_UART_Receive_IT(&huart3, &rx_byte, 1);  // rx_byte ??? uint8_t
+#endif
+  HAL_UART_Receive_IT(&huart2, &rx_byte, 1);  // rx_byte ??? uint8_t
+
+  HAL_UART_Receive_IT(&huart1, &rx_byte, 1);  // rx_byte ??? uint8_t
+
   HAL_TIM_Base_Start_IT(&htim2);
+#ifdef Debug_ETH  
+
   uint8_t memsize[2][8] = { {2,2,2,2,2,2,2,2},{2,2,2,2,2,2,2,2}};
 
 	register_wizchip();
 	Load_Net_Parameters();
 	
-	  
+#endif	  
 	  
 //	  uint8_t read_mac[6];
 //	getSHAR(read_mac);  // ioLibrary_Driver ?????
@@ -408,7 +429,7 @@ int main(void)
   /* WIZCHIP SOCKET Buffer initialize */
   
   // uint8_t memsize[2][8] = {{2,2,2,2,2,2,2,2},{2,2,2,2,2,2,2,2}};  // ?????
-
+#ifdef Debug_W5500
 if(ctlwizchip(CW_INIT_WIZCHIP, (void*)memsize) == -1)
 {
     printf("WIZCHIP Initialized fail.\r\n");
@@ -473,6 +494,7 @@ printf("DNS : %d.%d.%d.%d\r\n",
 	// reg_httpServer_webContent((uint8_t*)"status",  (uint8_t*)data_json_content2);
 
 	//		reg_httpServer_webContent((uint8_t*)"example.cgi",  (uint8_t*)data_json_content2);
+#endif
 
   /* USER CODE END 2 */
 
@@ -484,7 +506,9 @@ printf("DNS : %d.%d.%d.%d\r\n",
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-	  httpServer_run(http_socket_num[0]);  
+#ifdef 	Debug_W5500  
+	  httpServer_run(http_socket_num[0]);
+#endif	  
 	  	// UART_SendString("Hello from STM32!\r\n");
 	// printf("Hello 2026!");
 	// HAL_Delay(500);
@@ -534,169 +558,6 @@ void SystemClock_Config(void)
   /** Enables the Clock Security System
   */
   HAL_RCC_EnableCSS();
-}
-
-/**
-  * @brief SPI1 Initialization Function
-  * @param None
-  * @retval None
-  */
-static void MX_SPI1_Init(void)
-{
-
-  /* USER CODE BEGIN SPI1_Init 0 */
-
-  /* USER CODE END SPI1_Init 0 */
-
-  /* USER CODE BEGIN SPI1_Init 1 */
-
-  /* USER CODE END SPI1_Init 1 */
-  /* SPI1 parameter configuration*/
-  hspi1.Instance = SPI1;
-  hspi1.Init.Mode = SPI_MODE_MASTER;
-  hspi1.Init.Direction = SPI_DIRECTION_2LINES;
-  hspi1.Init.DataSize = SPI_DATASIZE_8BIT;
-  hspi1.Init.CLKPolarity = SPI_POLARITY_LOW;
-  hspi1.Init.CLKPhase = SPI_PHASE_1EDGE;
-  hspi1.Init.NSS = SPI_NSS_SOFT;
-  hspi1.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_4;
-  hspi1.Init.FirstBit = SPI_FIRSTBIT_MSB;
-  hspi1.Init.TIMode = SPI_TIMODE_DISABLE;
-  hspi1.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
-  hspi1.Init.CRCPolynomial = 10;
-  if (HAL_SPI_Init(&hspi1) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  /* USER CODE BEGIN SPI1_Init 2 */
-
-  /* USER CODE END SPI1_Init 2 */
-
-}
-
-/**
-  * @brief TIM2 Initialization Function
-  * @param None
-  * @retval None
-  */
-static void MX_TIM2_Init(void)
-{
-
-  /* USER CODE BEGIN TIM2_Init 0 */
-
-  /* USER CODE END TIM2_Init 0 */
-
-  TIM_ClockConfigTypeDef sClockSourceConfig = {0};
-  TIM_MasterConfigTypeDef sMasterConfig = {0};
-
-  /* USER CODE BEGIN TIM2_Init 1 */
-
-  /* USER CODE END TIM2_Init 1 */
-  htim2.Instance = TIM2;
-  htim2.Init.Prescaler = 7199;
-  htim2.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim2.Init.Period = 9999;
-  htim2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
-  htim2.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;
-  if (HAL_TIM_Base_Init(&htim2) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
-  if (HAL_TIM_ConfigClockSource(&htim2, &sClockSourceConfig) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
-  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
-  if (HAL_TIMEx_MasterConfigSynchronization(&htim2, &sMasterConfig) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  /* USER CODE BEGIN TIM2_Init 2 */
-
-  /* USER CODE END TIM2_Init 2 */
-
-}
-
-/**
-  * @brief USART3 Initialization Function
-  * @param None
-  * @retval None
-  */
-static void MX_USART3_UART_Init(void)
-{
-
-  /* USER CODE BEGIN USART3_Init 0 */
-
-  /* USER CODE END USART3_Init 0 */
-
-  /* USER CODE BEGIN USART3_Init 1 */
-
-  /* USER CODE END USART3_Init 1 */
-  huart3.Instance = USART3;
-  huart3.Init.BaudRate = 115200;
-  huart3.Init.WordLength = UART_WORDLENGTH_8B;
-  huart3.Init.StopBits = UART_STOPBITS_1;
-  huart3.Init.Parity = UART_PARITY_NONE;
-  huart3.Init.Mode = UART_MODE_TX_RX;
-  huart3.Init.HwFlowCtl = UART_HWCONTROL_NONE;
-  huart3.Init.OverSampling = UART_OVERSAMPLING_16;
-  if (HAL_UART_Init(&huart3) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  /* USER CODE BEGIN USART3_Init 2 */
-
-  /* USER CODE END USART3_Init 2 */
-
-}
-
-/**
-  * @brief GPIO Initialization Function
-  * @param None
-  * @retval None
-  */
-static void MX_GPIO_Init(void)
-{
-  GPIO_InitTypeDef GPIO_InitStruct = {0};
-/* USER CODE BEGIN MX_GPIO_Init_1 */
-/* USER CODE END MX_GPIO_Init_1 */
-
-  /* GPIO Ports Clock Enable */
-  __HAL_RCC_GPIOD_CLK_ENABLE();
-  __HAL_RCC_GPIOA_CLK_ENABLE();
-  __HAL_RCC_GPIOC_CLK_ENABLE();
-  __HAL_RCC_GPIOB_CLK_ENABLE();
-
-  /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(W5500_NSS_GPIO_Port, W5500_NSS_Pin, GPIO_PIN_SET);
-
-  /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(W5500_RST_GPIO_Port, W5500_RST_Pin, GPIO_PIN_SET);
-
-  /*Configure GPIO pin : W5500_NSS_Pin */
-  GPIO_InitStruct.Pin = W5500_NSS_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(W5500_NSS_GPIO_Port, &GPIO_InitStruct);
-
-  /*Configure GPIO pin : W5500_RST_Pin */
-  GPIO_InitStruct.Pin = W5500_RST_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(W5500_RST_GPIO_Port, &GPIO_InitStruct);
-
-  /*Configure GPIO pin : W5500_INT_Pin */
-  GPIO_InitStruct.Pin = W5500_INT_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(W5500_INT_GPIO_Port, &GPIO_InitStruct);
-
-/* USER CODE BEGIN MX_GPIO_Init_2 */
-/* USER CODE END MX_GPIO_Init_2 */
 }
 
 /* USER CODE BEGIN 4 */
