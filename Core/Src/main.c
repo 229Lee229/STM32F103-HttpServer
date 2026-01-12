@@ -77,7 +77,13 @@ static void LibmodbusClientTest(void)
 	
 	ctx = modbus_new_st_rtu("uart2", 9600, 'N', 8, 1);
 	modbus_set_slave(ctx, 1);
+	//modbus_rtu_set_serial_mode(ctx,MODBUS_RTU_RS485);
+	//modbus_rtu_set_rts(ctx, MODBUS_RTU_RTS_UP);        // 高电平使能发�?
+	//modbus_rtu_set_rts_delay(ctx, 500);                // 500 μs 延时
 	modbus_set_debug(ctx, TRUE);
+	modbus_set_response_timeout(ctx, 0, 20000);   // 
+		modbus_set_byte_timeout(ctx, 0, 2000);   // 2 ms，常用安全�??
+
 	rc = modbus_connect(ctx);
 	if (rc == -1) {
 		//fprintf(stderr, "Unable to connect %s\n", modbus_strerror(errno));
@@ -86,18 +92,23 @@ static void LibmodbusClientTest(void)
 	}
 
 
+	// test get timeout
+	uint32_t sec,usec;
+	modbus_get_response_timeout(ctx,&sec,&usec);
+	printf("modbus_get_response_timeout:sec:%u, usec:%u\r\n",sec,usec);
+
 	for (;;) {
 			  
-		rc = modbus_read_input_registers(ctx, 0, 1, vals);
-		rc2 = modbus_read_input_registers(ctx, 1, 1, vals2);
+		rc = modbus_read_input_registers(ctx, 0, 2, vals);
+		// rc2 = modbus_read_input_registers(ctx, 1, 1, vals2);
 		
 		// printf("rc = %d\r\n",rc);
 		// printf("waitting");
-		if (rc == 1)
+		if (rc == 2)
 		{
 		    // printf("TEM/HUM Sensor : temp %d.%d, humi %d.%d          \r\n", vals[0]/10, vals[0]%10, vals[1]/10, vals[1]%10);
 			printf("TEMP:%d.%d\r\n", vals[0]/10,vals[0]%10);
-			printf("HUM: %d.%d\r\n", vals2[0]/10,vals2[0]%10);
+			printf("HUM: %d.%d\r\n", vals[1]/10,vals[1]%10);
 		}
 
         HAL_Delay(500);
@@ -108,15 +119,15 @@ static void LibmodbusClientTest(void)
 	modbus_free(ctx);
 }
 
-// 1. 在 main.c 或合适地方，重写弱定义的回调（最干净）
+// 1. �? main.c 或合适地方，重写弱定义的回调（最干净�?
 void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
 {
     if (huart->Instance == USART2)
     {
-        // 只有真正发送完成（最后一个字节+停止位发出）才会进这里
+        // 只有真正发�?�完成（�?后一个字�?+停止位发出）才会进这�?
         // RS485_RX_ENABLE();          // 切回接收
 		printf("ok\r\n");
-        // 可选：清一些发送完成标志 send_complete = 1;
+        // 可�?�：清一些发送完成标�? send_complete = 1;
     }
 }
 
@@ -172,25 +183,24 @@ int main(void)
   /* USER CODE END SysInit */
 
   /* Initialize all configured peripherals */
-	MX_GPIO_Init();
-	HAL_GPIO_WritePin(LED_R_GPIO_Port, LED_R_Pin, GPIO_PIN_SET);
-	MX_USART2_UART_Init();
-	MX_USART3_UART_Init();
-	MX_TIM2_Init();
-	/* USER CODE BEGIN 2 */
+  MX_GPIO_Init();
+  MX_USART2_UART_Init();
+  MX_USART3_UART_Init();
+  MX_TIM2_Init();
+  /* USER CODE BEGIN 2 */
 		HAL_TIM_Base_Start_IT(&htim2);
 
 	HAL_UART_Receive_IT(&huart2, &rx_byte, 1);  // rx_byte ??? uint8_t
-	// __HAL_UART_ENABLE_IT(&huart2, UART_IT_TC);  // huart2 是你的 UART 句柄
+	// __HAL_UART_ENABLE_IT(&huart2, UART_IT_TC);  // huart2 是你�? UART 句柄
 	// uint32_t cr1 = USART2->CR1;
 //	if (cr1 & USART_CR1_TCIE) {
 //			HAL_GPIO_WritePin(LED_R_GPIO_Port, LED_R_Pin, GPIO_PIN_RESET);
 
-//	// 成功开启了 TCIE
+//	// 成功�?启了 TCIE
 //	// 可以打日志或亮灯
 //	} else {
-//	// 失败！说明 ENABLE_IT 没生效
-//	// 可能时钟没开、串口没初始化、参数错
+//	// 失败！说�? ENABLE_IT 没生�?
+//	// 可能时钟没开、串口没初始化�?�参数错
 //	}
 	HAL_UART_Receive_IT(&huart3, &rx_byte, 1);  // rx_byte ??? uint8_t
 

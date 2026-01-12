@@ -220,22 +220,22 @@ void TIM2_IRQHandler(void)
 void USART2_IRQHandler(void)
 {
   /* USER CODE BEGIN USART2_IRQn 0 */
-// 先读 SR（读取会锁存所有标志位）
+// 先读 SR（读取会锁存�?有标志位�?
 //    uint32_t sr = USART2->SR;
 
-//    // 检查是否是 TC 中断（bit 6）
-//    if (sr & USART_SR_TC)   // 等价于 (sr & (1U << 6))
+//    // �?查是否是 TC 中断（bit 6�?
+//    if (sr & USART_SR_TC)   // 等价�? (sr & (1U << 6))
 //    {
-//        // 必须读 SR + 写 DR 来清除 TC 标志（F1 系列唯一方式）
-//        USART2->DR = 0x00;  // 写任意值都行，没实际数据发出
+//        // 必须�? SR + �? DR 来清�? TC 标志（F1 系列唯一方式�?
+//        USART2->DR = 0x00;  // 写任意�?�都行，没实际数据发�?
 
 //        // 关闭 TC 中断（防止一直触发）
 //        USART2->CR1 &= ~USART_CR1_TCIE;
 
-//        // 安全切换到接收模式
+//        // 安全切换到接收模�?
 //        RS485_RX_ENABLE();
 
-//        // 可选：设置一个标志位，告诉主循环“发送完成了”
+//        // 可�?�：设置�?个标志位，告诉主循环“发送完成了�?
 //        // send_complete = 1;
 //    }
   /* USER CODE END USART2_IRQn 0 */

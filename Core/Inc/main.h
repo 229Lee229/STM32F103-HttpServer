@@ -33,14 +33,14 @@ extern "C" {
 /* USER CODE BEGIN Includes */
 
 
-// 宏定义（方便修改）
+// 宏定义（方便修改�?
 #define RS485_DE_GPIO_Port    GPIOC
 #define RS485_DE_Pin          GPIO_PIN_5
 
-// 发送前调用：进入发送模式
+// 发�?�前调用：进入发送模�?
 #define RS485_TX_ENABLE()   HAL_GPIO_WritePin(RS485_DE_GPIO_Port, RS485_DE_Pin, GPIO_PIN_SET)
 
-// 发送完成后调用：切回接收模式
+// 发�?�完成后调用：切回接收模�?
 #define RS485_RX_ENABLE()   HAL_GPIO_WritePin(RS485_DE_GPIO_Port, RS485_DE_Pin, GPIO_PIN_RESET)
 
 /* USER CODE END Includes */

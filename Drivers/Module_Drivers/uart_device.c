@@ -45,6 +45,7 @@ int uart_send( struct UART_Device *pDev, uint8_t *datas, uint32_t len, int timeo
 	UART_HandleTypeDef *huart = pDev->priv_data;
 	if(HAL_OK == (HAL_UART_Transmit(huart,datas,len,timeout))){
 		printf("len = %d\r\n",len);
+		for(int i = 0;i <= 10000;i++){};
 		RS485_RX_ENABLE();
 		return 0;
 	}
