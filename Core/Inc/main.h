@@ -42,7 +42,7 @@ extern "C" {
 
 // 发�?�完成后调用：切回接收模�?
 #define RS485_RX_ENABLE()   HAL_GPIO_WritePin(RS485_DE_GPIO_Port, RS485_DE_Pin, GPIO_PIN_RESET)
-
+void my_rtu_abort_receive(void);
 /* USER CODE END Includes */
 
 /* Exported types ------------------------------------------------------------*/

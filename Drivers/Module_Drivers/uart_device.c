@@ -35,7 +35,8 @@
 // extern struct UART_Device g_uart4_dev;
 
 
-  
+extern uint8_t rx_byte;
+
 int uart_init( struct UART_Device *pDev, int baud, char parity, int data_bit, int stop_bit)
 {
 	return 0;
@@ -44,9 +45,10 @@ int uart_send( struct UART_Device *pDev, uint8_t *datas, uint32_t len, int timeo
 {
 	UART_HandleTypeDef *huart = pDev->priv_data;
 	if(HAL_OK == (HAL_UART_Transmit(huart,datas,len,timeout))){
-		printf("len = %d\r\n",len);
+		// printf("len = %d\r\n",len);
 		for(int i = 0;i <= 10000;i++){};
 		RS485_RX_ENABLE();
+		HAL_UART_Receive_IT(&huart2, &rx_byte, 1);
 		return 0;
 	}
 	else 

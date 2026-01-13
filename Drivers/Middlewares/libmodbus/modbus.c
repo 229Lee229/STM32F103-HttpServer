@@ -181,6 +181,8 @@ static int send_msg(modbus_t *ctx, uint8_t *msg, int msg_length)
        successful! Disabled by default. */
 	
 		RS485_TX_ENABLE();
+		my_rtu_abort_receive();
+		// HAL_UART_AbortReceive_IT(ctx->backend->);
 		// __HAL_UART_ENABLE_IT(&huart2, UART_IT_TC);
 	// USART2->CR1 |= USART_CR1_TCIE;
 	

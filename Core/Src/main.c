@@ -48,6 +48,14 @@ int fputc(int ch, FILE *f)
     HAL_UART_Transmit(&huart3, (uint8_t *)&ch, 1, 100);
     return ch;
 }
+
+void my_rtu_abort_receive(void)
+{
+    
+    HAL_UART_AbortReceive_IT(&huart2);  // 关键：中止中断接收
+}
+
+
 HAL_StatusTypeDef UART_SendString(const char* str)
 {
     uint16_t len = 0;
@@ -190,7 +198,8 @@ int main(void)
   /* USER CODE BEGIN 2 */
 		HAL_TIM_Base_Start_IT(&htim2);
 
-	HAL_UART_Receive_IT(&huart2, &rx_byte, 1);  // rx_byte ??? uint8_t
+	// HAL_UART_Receive_IT(&huart2, &rx_byte, 1);  // rx_byte ??? uint8_t
+	HAL_UART_AbortReceive_IT(&huart2);
 	// __HAL_UART_ENABLE_IT(&huart2, UART_IT_TC);  // huart2 是你�? UART 句柄
 	// uint32_t cr1 = USART2->CR1;
 //	if (cr1 & USART_CR1_TCIE) {
