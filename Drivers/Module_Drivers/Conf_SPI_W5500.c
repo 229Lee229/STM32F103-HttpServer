@@ -1,0 +1,107 @@
+#include "Conf_SPI_W5500.h"
+#include "main.h"
+#include "w5500.h"
+#include "wizchip_conf.h"
+extern SPI_HandleTypeDef * const p_hspi_w5500;		// An external definition of \
+													   SPI_HandleTypeDef * const p_hspi_w5500 = &hspi1 is required.
+
+/**
+* @brief W5500 SPI single-byte read callback function
+* @note Reads a byte from the W5500 by sending a dummy byte (0xFF).
+* This function is automatically called by the ioLibrary_Driver library on all register/buffer read operations.
+* Must be used in pair with my_wizchip_spi_writebyte and executed within a critical section (CS pulled low).
+* @param None
+* @retval uint8_t Byte data read from the W5500
+*/
+uint8_t my_wizchip_spi_readbyte(void)
+{
+	// Note: CS has already been pulled low in the critical section macro of the library, so no manual control is needed here.
+    uint8_t rx_byte = 0xFF;  // dummy byte
+
+#if defined(SPI_TIMEOUT_BLOCKING)
+	// Blocking mode: No timeout (used during debugging; risk: W5500 may freeze due to an anomaly).
+	HAL_SPI_TransmitReceive(p_hspi_w5500, &rx_byte, &rx_byte, 1, HAL_MAX_DELAY);
+#elif defined(SPI_TIMEOUT_SAFE) || !defined(SPI_TIMEOUT_BLOCKING)
+	// Safe mode: 100ms timeout (highly recommended for production environments)
+	if (HAL_SPI_TransmitReceive(p_hspi_w5500, &rx_byte, &rx_byte, 1, 100) != HAL_OK)
+    {
+        // Optional: Record the number of errors
+        // static uint32_t spi_err_cnt = 0;
+        // spi_err_cnt++;
+        // printf("SPI read timeout/error\r\n");
+        return 0xFF;  // return invalid
+    }
+#else	
+	// default safe mode
+	HAL_SPI_TransmitReceive(p_hspi_w5500, &rx_byte, &rx_byte, 1, 100);
+
+#endif	
+    return rx_byte;
+}
+
+/**
+* @brief W5500 SPI single-byte write callback function
+* @note Sends a byte of data to the W5500.
+* This function is automatically called by the ioLibrary_Driver library on all register/buffer write operations.
+* Must be used in pair with my_wizchip_spi_readbyte and executed within a critical section (CS pulled low).
+* @param wb The byte of data to write to the W5500
+* @retval None
+*/
+void my_wizchip_spi_writebyte(uint8_t wb)
+{
+	// Note: CS has already been pulled low in the critical section macro of the library, so no manual control is needed here.
+#if defined(SPI_TIMEOUT_BLOCKING)
+    HAL_SPI_Transmit(p_hspi_w5500, &wb, 1, HAL_MAX_DELAY);
+#elif defined(SPI_TIMEOUT_SAFE) || !defined(SPI_TIMEOUT_BLOCKING)
+    if (HAL_SPI_Transmit(p_hspi_w5500, &wb, 1, 100) != HAL_OK)
+    {
+        // Optional: Record the number of errors
+        // printf("SPI write timeout/error\r\n");
+    }
+#else
+	// default safe mode 
+    HAL_SPI_Transmit(&hspi1, &wb, 1, 100);
+#endif	
+}
+
+
+void SPI_CrisEnter(void)
+{
+    __set_PRIMASK(1);
+}
+
+void SPI_CrisExit(void)
+{
+    __set_PRIMASK(0);
+}
+ 
+void SPI_CS_Select(void)
+{
+    HAL_GPIO_WritePin(W5500_CSS_GPIO_Port, W5500_CSS_Pin, GPIO_PIN_RESET);
+}
+
+void SPI_CS_Deselect(void)
+{
+    HAL_GPIO_WritePin(W5500_CSS_GPIO_Port, W5500_CSS_Pin, GPIO_PIN_SET);
+}
+
+void register_wizchip()
+{
+	// First of all, Should register SPI callback functions implemented by user for accessing WIZCHIP 
+	
+	/* Critical section callback */
+	/* Register critical section callback (protect SPI communication from interruption) */
+	reg_wizchip_cris_cbfunc(SPI_CrisEnter, SPI_CrisExit);   
+	
+	/* Chip selection call back */
+	reg_wizchip_cs_cbfunc(SPI_CS_Select, SPI_CS_Deselect);
+	
+	/* SPI Read & Write callback function */
+	reg_wizchip_spi_cbfunc(my_wizchip_spi_readbyte, my_wizchip_spi_writebyte);  
+	
+	// Optional: If burst read/write is implemented, you can also register (for better performance).
+	// reg_wizchip_spi_burst_cbfunc(my_wizchip_spi_readburst, my_wizchip_spi_writeburst);
+}
+
+
+

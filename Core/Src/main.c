@@ -18,6 +18,7 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "spi.h"
 #include "tim.h"
 #include "usart.h"
 #include "gpio.h"
@@ -26,15 +27,24 @@
 /* USER CODE BEGIN Includes */
 #include <stdio.h>
 #include "modbus.h"
+#include <w5500.h>
+#include <wizchip_conf.h>
+#include "Conf_SPI_W5500.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
+SPI_HandleTypeDef * const p_hspi_w5500 = &hspi1;
+		wiz_NetInfo gWIZNETINFO;		// setINFO
+		wiz_NetInfo netinfo;			// readback
 
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+void Load_Net_Parameters(void);
+uint8_t W5500_WaitReady(uint16_t timeout_ms);
+
 uint8_t rx_byte;
 int __io_putchar(int ch)
 {
@@ -52,7 +62,7 @@ int fputc(int ch, FILE *f)
 void my_rtu_abort_receive(void)
 {
     
-    HAL_UART_AbortReceive_IT(&huart2);  // 关键：中止中断接收
+    HAL_UART_AbortReceive_IT(&huart2);  // 关键：中止中断接�?
 }
 
 
@@ -71,7 +81,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
         // ?????????
         // ??:?? LED?????????
 		//   HAL_GPIO_WritePin(LED_R_GPIO_Port, LED_R_Pin, GPIO_PIN_RESET);
-		// HAL_GPIO_TogglePin(LED_R_GPIO_Port,LED_R_Pin);
+		HAL_GPIO_TogglePin(LED_R_GPIO_Port,LED_R_Pin);
 		printf("keep going from ZET6.\r\n");
 		// HAL_GPIO_TogglePin(GPIOC,GPIO_PIN_5);
     }
@@ -107,7 +117,8 @@ static void LibmodbusClientTest(void)
 
 	for (;;) {
 			  
-		rc = modbus_read_input_registers(ctx, 0, 2, vals);
+		// rc = modbus_read_input_registers(ctx, 0, 2, vals);
+		rc = modbus_read_registers(ctx, 0, 2, vals);
 		// rc2 = modbus_read_input_registers(ctx, 1, 1, vals2);
 		
 		// printf("rc = %d\r\n",rc);
@@ -116,10 +127,10 @@ static void LibmodbusClientTest(void)
 		{
 		    // printf("TEM/HUM Sensor : temp %d.%d, humi %d.%d          \r\n", vals[0]/10, vals[0]%10, vals[1]/10, vals[1]%10);
 			printf("TEMP:%d.%d\r\n", vals[0]/10,vals[0]%10);
-			printf("HUM: %d.%d\r\n", vals[1]/10,vals[1]%10);
+			printf("HUMI: %d.%d\r\n", vals[1]/10,vals[1]%10);
 		}
 
-        HAL_Delay(500);
+        HAL_Delay(900);
 	}
 
 	/* For RTU */
@@ -134,7 +145,7 @@ void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
     {
         // 只有真正发�?�完成（�?后一个字�?+停止位发出）才会进这�?
         // RS485_RX_ENABLE();          // 切回接收
-		printf("ok\r\n");
+		//printf("ok\r\n");
         // 可�?�：清一些发送完成标�? send_complete = 1;
     }
 }
@@ -160,6 +171,20 @@ void SystemClock_Config(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+//int sub(int a,int b){
+//	return a - b;
+//}
+
+//int add(int a,int b){
+//	return a+b;
+//}
+//typedef int(*pfun)(int,int);
+
+//int calc(pfun fp,int a,int b){
+//	return fp(a,b);
+//}
+
+
 
 /* USER CODE END 0 */
 
@@ -171,7 +196,10 @@ int main(void)
 {
 
   /* USER CODE BEGIN 1 */
-
+//	int x = 5, j = 2;
+//	int z;
+//	z = calc(add,5,2);
+//	return 0;
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -195,29 +223,68 @@ int main(void)
   MX_USART2_UART_Init();
   MX_USART3_UART_Init();
   MX_TIM2_Init();
+  MX_SPI1_Init();
   /* USER CODE BEGIN 2 */
-		HAL_TIM_Base_Start_IT(&htim2);
+	HAL_TIM_Base_Start_IT(&htim2);
+	
 
-	// HAL_UART_Receive_IT(&huart2, &rx_byte, 1);  // rx_byte ??? uint8_t
+	HAL_UART_Receive_IT(&huart2, &rx_byte, 1);  // rx_byte ??? uint8_t
 	HAL_UART_AbortReceive_IT(&huart2);
-	// __HAL_UART_ENABLE_IT(&huart2, UART_IT_TC);  // huart2 是你�? UART 句柄
-	// uint32_t cr1 = USART2->CR1;
-//	if (cr1 & USART_CR1_TCIE) {
-//			HAL_GPIO_WritePin(LED_R_GPIO_Port, LED_R_Pin, GPIO_PIN_RESET);
 
-//	// 成功�?启了 TCIE
-//	// 可以打日志或亮灯
-//	} else {
-//	// 失败！说�? ENABLE_IT 没生�?
-//	// 可能时钟没开、串口没初始化�?�参数错
-//	}
-	HAL_UART_Receive_IT(&huart3, &rx_byte, 1);  // rx_byte ??? uint8_t
+	
+	uint8_t memsize[2][8] = { {2,2,2,2,2,2,2,2},{2,2,2,2,2,2,2,2}};
+
+	register_wizchip();
+	Load_Net_Parameters();
+		
+	if (W5500_WaitReady(455) == 0)  // 轮询 100ms 超时
+    {
+        printf("W5500 init timeout! Check hardware.\r\n");
+        NVIC_SystemReset();  // 立即软复位，整个 MCU 复位
+		// while(1);  // 失败死循环
+    }
+	printf("W5500 ready! VERSIONR = 0x%02X\r\n", getVERSIONR());
+	// while(!(HAL_GPIO_ReadPin(W5500_RST_GPIO_Port,W5500_RST_Pin))){}	
+	// HAL_Delay(200);
+		wizchip_setnetinfo(&gWIZNETINFO);
+	
+		wizchip_getnetinfo(&netinfo);
+				// Determine if initialization was successful
+
+		if(ctlwizchip(CW_INIT_WIZCHIP, (void*)memsize) == -1)
+	{
+		printf("WIZCHIP Initialized fail.\r\n");
+		while(1);
+	}
+	
+	printf("Current network info:\r\n");
+printf("MAC : %02X:%02X:%02X:%02X:%02X:%02X\r\n",
+       netinfo.mac[0], netinfo.mac[1], netinfo.mac[2],
+       netinfo.mac[3], netinfo.mac[4], netinfo.mac[5]);
+
+printf("IP  : %d.%d.%d.%d\r\n",
+       netinfo.ip[0], netinfo.ip[1], netinfo.ip[2], netinfo.ip[3]);
+
+printf("SN  : %d.%d.%d.%d\r\n",
+       netinfo.sn[0], netinfo.sn[1], netinfo.sn[2], netinfo.sn[3]);
+
+printf("GW  : %d.%d.%d.%d\r\n",
+       netinfo.gw[0], netinfo.gw[1], netinfo.gw[2], netinfo.gw[3]);
+
+printf("DNS : %d.%d.%d.%d\r\n",
+       netinfo.dns[0], netinfo.dns[1], netinfo.dns[2], netinfo.dns[3]);
+	
+	
+
+		
+
 
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   printf("Hello, from ZET6\r\n");
+ 
   while (1)
   {
     /* USER CODE END WHILE */
@@ -268,6 +335,55 @@ void SystemClock_Config(void)
 }
 
 /* USER CODE BEGIN 4 */
+
+// 判断 W5500 就绪的轮询函数
+uint8_t W5500_WaitReady(uint16_t timeout_ms)
+{
+    uint32_t start = HAL_GetTick();
+    uint8_t version = 0;
+
+    while (HAL_GetTick() - start < timeout_ms)
+    {
+        version = getVERSIONR();  // 读取 VERSIONR 寄存器
+        if (version == 0x04)
+        {
+            return 1;  // 就绪成功
+        }
+        HAL_Delay(1);  // 短延时重试
+    }
+    return 0;  // 超时失败
+}
+
+void Load_Net_Parameters(void)
+{
+	gWIZNETINFO.gw[0] = 192; //Gateway
+	gWIZNETINFO.gw[1] = 168;
+	gWIZNETINFO.gw[2] = 101;
+	gWIZNETINFO.gw[3] = 1;
+
+	gWIZNETINFO.sn[0]=255; //Mask
+	gWIZNETINFO.sn[1]=255;
+	gWIZNETINFO.sn[2]=255;
+	gWIZNETINFO.sn[3]=0;
+
+	gWIZNETINFO.mac[0]=0x0c; //MAC
+	gWIZNETINFO.mac[1]=0x29;
+	gWIZNETINFO.mac[2]=0xab;
+	gWIZNETINFO.mac[3]=0x7c;
+	gWIZNETINFO.mac[4]=0x00;
+	gWIZNETINFO.mac[5]=0xcc;
+
+	gWIZNETINFO.ip[0]=192; //IP
+	gWIZNETINFO.ip[1]=168;
+	gWIZNETINFO.ip[2]=101;
+	gWIZNETINFO.ip[3]=199;
+	
+	gWIZNETINFO.dns[0] = 8;
+	gWIZNETINFO.dns[1] = 8;
+	gWIZNETINFO.dns[2] = 8;
+	gWIZNETINFO.dns[3] = 8;	
+	gWIZNETINFO.dhcp = NETINFO_STATIC;
+}
 
 /* USER CODE END 4 */
 

@@ -114,3 +114,5 @@ MDK-ARM/ZET6-Modbus-demo/
 *.uvoptx
 STM32-Https-Modbus.si4project
 ZET6_Modbus_RTU.si4project
+Drivers/Middlewares/Ethernet/
+Drivers/Middlewares/Internet/

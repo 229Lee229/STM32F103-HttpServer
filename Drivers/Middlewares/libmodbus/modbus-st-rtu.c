@@ -408,7 +408,7 @@ modbus_new_st_rtu(const char *device, int baud, char parity, int data_bit, int s
     if (ctx == NULL) {
         return NULL;
     }
-
+	printf("modbus_t size is:%d\r\n",sizeof(modbus_t));
     _modbus_init_common(ctx);
 
 	ctx->backend = &_modbus_rtu_backend_uart;

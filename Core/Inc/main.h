@@ -68,10 +68,24 @@ void Error_Handler(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
+#define UART2_T_RTU_temp_Pin GPIO_PIN_2
+#define UART2_T_RTU_temp_GPIO_Port GPIOA
+#define UART2_R_RTU_temp_Pin GPIO_PIN_3
+#define UART2_R_RTU_temp_GPIO_Port GPIOA
 #define RS485_EN_Pin GPIO_PIN_5
 #define RS485_EN_GPIO_Port GPIOC
 #define LED_R_Pin GPIO_PIN_0
 #define LED_R_GPIO_Port GPIOB
+#define UART3_T_debug_Pin GPIO_PIN_10
+#define UART3_T_debug_GPIO_Port GPIOB
+#define UART3_R_debug_Pin GPIO_PIN_11
+#define UART3_R_debug_GPIO_Port GPIOB
+#define W5500_RST_Pin GPIO_PIN_15
+#define W5500_RST_GPIO_Port GPIOG
+#define W5500_CSS_Pin GPIO_PIN_6
+#define W5500_CSS_GPIO_Port GPIOB
+#define W5500_INT_Pin GPIO_PIN_7
+#define W5500_INT_GPIO_Port GPIOB
 
 /* USER CODE BEGIN Private defines */
 
