@@ -88,6 +88,12 @@ void Error_Handler(void);
 #define W5500_INT_GPIO_Port GPIOB
 
 /* USER CODE BEGIN Private defines */
+#define MODBUS_TCP_PORT     502
+#define MODBUS_TCP_MAX_ADU  260  // MODBUS_TCP_MAX_ADU_LENGTH 
+#define MODBUS_RTU_MAX_ADU  256
+
+
+
 
 /* USER CODE END Private defines */
 
