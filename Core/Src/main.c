@@ -431,7 +431,7 @@ void ModbusTCP_Server(void)
 
                 modbus_set_slave(rtu_ctx, unit_id);
 				modbus_set_debug(rtu_ctx, TRUE);
-                modbus_set_response_timeout(rtu_ctx, 0, 500000);   // 500ms，与你 RTU 示例一致
+                modbus_set_response_timeout(rtu_ctx, 0, 600000);   // 500ms，与你 RTU 示例一致
                 modbus_set_byte_timeout(rtu_ctx, 0, 20000);
 				
 				
@@ -485,6 +485,13 @@ void ModbusTCP_Server(void)
                         // 发送响应（使用你提供的 send 函数）
                         send(sock, resp_buf, resp_len);
                         printf("Sent Modbus TCP response, len=%d\r\n", resp_len);
+							printf("Resp_buf: \r\n");
+							printf("-->>>>>>> ");
+						for(int i = 0;i < resp_len;i++){
+							printf("%02x ",resp_buf[i]);
+						}
+						printf(" <<<<<<<<--\r\n");
+						// printf("Resp_buf: ");
                     }
                     else
                     {
@@ -500,6 +507,9 @@ void ModbusTCP_Server(void)
             
             
 
+
+		}
+	}
         // 处理连接状态变化
         uint8_t sr2 = getSn_SR(sock);
         if (sr2 == SOCK_CLOSE_WAIT || sr2 == SOCK_CLOSED || sr2 == SOCK_LAST_ACK)
@@ -510,11 +520,7 @@ void ModbusTCP_Server(void)
             listen(sock);
         }
 		HAL_Delay(1);
-		}
-	}
-//	else{
-//		printf("wait..\r\n");
-//	}
+
 	}
 }
 
@@ -614,7 +620,7 @@ void Load_Net_Parameters(void)
 	gWIZNETINFO.mac[2]=0xab;
 	gWIZNETINFO.mac[3]=0x7c;
 	gWIZNETINFO.mac[4]=0x00;
-	gWIZNETINFO.mac[5]=0xcc;
+	gWIZNETINFO.mac[5]=0x12;
 
 	gWIZNETINFO.ip[0]=192; //IP
 	gWIZNETINFO.ip[1]=168;
