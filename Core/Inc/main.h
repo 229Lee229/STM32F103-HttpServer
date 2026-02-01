@@ -92,6 +92,8 @@ void Error_Handler(void);
 #define MODBUS_TCP_MAX_ADU  260  // MODBUS_TCP_MAX_ADU_LENGTH 
 #define MODBUS_RTU_MAX_ADU  256
 
+#define SD_DATA_SIZE 4096
+
 
 
 

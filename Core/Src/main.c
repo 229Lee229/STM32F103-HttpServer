@@ -18,6 +18,9 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "dma.h"
+#include "fatfs.h"
+#include "sdio.h"
 #include "spi.h"
 #include "tim.h"
 #include "usart.h"
@@ -34,12 +37,20 @@
 #include "Conf_SPI_W5500.h"
 #include "errno.h"
 
+
+// for sd file
+#include "fatfs.h"
+#include "bsp_driver_sd.h"
+#include "ff.h"
+#include "diskio.h"
+#include "myDiskio.h"
+#include "SD.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
 static uint8_t tcp_rx_buf[MODBUS_TCP_MAX_ADU];   // TCP 接收缓冲
-static uint8_t rtu_tx_buf[MODBUS_RTU_MAX_ADU];   // RTU 发送缓冲（请求）
+static uint8_t rtu_tx_buf[MODBUS_RTU_MAX_ADU];   // RTU 发�?�缓冲（请求�?
 static uint8_t rtu_rx_buf[MODBUS_RTU_MAX_ADU];   // RTU 接收缓冲（响应）
 static uint8_t rtu_req_buf[MODBUS_RTU_MAX_ADU];  // RTU 请求缓冲
 static uint16_t sensor_vals[10];
@@ -47,11 +58,25 @@ static modbus_t *mb_tcp_ctx = NULL;
 static modbus_mapping_t *mb_mapping = NULL;			// register mapping
 uint16_t g_sensor_temp = 0;
 uint16_t g_sensor_humi = 0;
+volatile int writeCounter = 0;
 
 
 SPI_HandleTypeDef * const p_hspi_w5500 = &hspi1;
 		wiz_NetInfo gWIZNETINFO;		// setINFO
 		wiz_NetInfo netinfo;			// readback
+
+
+FATFS fs;			// Fatfs file system object
+FIL file;			// file object
+FRESULT fres;		// FatFs returnNum
+UINT bw;			// write bytes
+
+FRESULT fr = FR_NOT_READY;
+FATFS SDFatFs; /* File system object for SD card logical drive */
+UINT byteswritten, bytesread; /* File write/read counts */
+uint16_t fileCounter = 0;
+char SDFileName[13] = "test2000.txt";
+char SDdata[SD_DATA_SIZE] = "1,1,31,16,30";
 
 /* USER CODE END PTD */
 
@@ -98,11 +123,12 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
     {
         // ?????????
         // ??:?? LED?????????
-		//   HAL_GPIO_WritePin(LED_R_GPIO_Port, LED_R_Pin, GPIO_PIN_RESET);
-		HAL_GPIO_TogglePin(LED_R_GPIO_Port,LED_R_Pin);
+		HAL_GPIO_WritePin(LED_R_GPIO_Port, LED_R_Pin, GPIO_PIN_RESET);
+		// HAL_GPIO_TogglePin(LED_R_GPIO_Port,LED_R_Pin);
 		printf("keep going from ZET6.\r\n");
 		// HAL_GPIO_TogglePin(GPIOC,GPIO_PIN_5);
-		
+		HAL_GPIO_WritePin(LED_R_GPIO_Port, LED_R_Pin, GPIO_PIN_SET);
+
 		// LibmodbusClientTest();
 		// ifmodbus_read_input_registers(ctx, 0, 2, vals);
 		
@@ -244,10 +270,13 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
+  MX_DMA_Init();
   MX_USART2_UART_Init();
   MX_USART3_UART_Init();
   MX_TIM2_Init();
   MX_SPI1_Init();
+  MX_SDIO_SD_Init();
+  MX_FATFS_Init();
   /* USER CODE BEGIN 2 */
 	HAL_TIM_Base_Start_IT(&htim2);
 	
@@ -265,7 +294,7 @@ int main(void)
     {
         printf("W5500 init timeout! Check hardware.\r\n");
         NVIC_SystemReset();  // 立即软复位，整个 MCU 复位
-		// while(1);  // 失败死循环
+		// while(1);  // 失败死循�?
     }
 	printf("W5500 ready! VERSIONR = 0x%02X\r\n", getVERSIONR());
 	// while(!(HAL_GPIO_ReadPin(W5500_RST_GPIO_Port,W5500_RST_Pin))){}	
@@ -299,7 +328,104 @@ printf("DNS : %d.%d.%d.%d\r\n",
        netinfo.dns[0], netinfo.dns[1], netinfo.dns[2], netinfo.dns[3]);
 	
 	
+	
+	// for SD 4bit
+	HAL_SD_CardInfoTypeDef CardInfo;  // 加这行声明变量（必须！）
+	mountSDCard(&fr,&SDFatFS);
+		setFileName(&fileCounter, SDFileName);
+		openWriteModeSDCardFile(&fr, SDFileName);
+		printf("sddatalength:%d\r\n",strlen(SDdata));
+		// writeSDCardFile(&fr, (void*) SDdata, strlen(SDdata), &byteswritten);
+		writeSDCardFile(&fr, "I can.", 6, &byteswritten);
+		printf("byteswritten : %d\r\n",byteswritten);
 
+		// data_rate[i] = (float)(DATA_SIZE_BIT / 8.0f / 1000000.0f / (duration/1000.0f)) ; // in Byte/s
+
+		closeSDCardFile(&fr);
+		__NOP();
+
+
+		uint32_t clkcr = SDIO->CLKCR;
+		uint32_t widbus = (clkcr >> 10) & 0x03;
+		if (widbus == 0x02) {
+			printf("4bit\r\n");
+			// return 4;   // 4-bit 模式
+		} else if (widbus == 0x00) {
+			printf("1bit\r\n");
+			// return 1;   // 1-bit 模式
+		} else {
+			printf("fail\r\n");
+			return 0;   // 未知/错误
+		}
+
+#define oneBIT
+	// SD 1BIT START	
+#ifndef oneBIT
+	
+	// start SD CARD
+	if (HAL_SD_GetCardInfo(&hsd, &CardInfo) == HAL_OK) {
+		printf("Card Detected! Type: %d, Version: %d\r\n", CardInfo.CardType, CardInfo.CardVersion);
+	}
+
+// 无需宽濻线代�?
+
+// 等待 TRANSFER 状濁（保险＿
+uint32_t timeout2 = HAL_GetTick() + 200;
+while (HAL_SD_GetCardState(&hsd) != HAL_SD_CARD_TRANSFER) {
+    if (HAL_GetTick() > timeout2) break;
+    HAL_Delay(1);
+}
+printf("Card State: %d\r\n", HAL_SD_GetCardState(&hsd));
+
+// 底层初始�?
+DRESULT res = disk_initialize(0);
+printf("disk_initialize: %d\r\n", res);
+
+// 挂载
+fres = f_mount(&fs, "", 1);
+printf("Mount: %d\r\n", fres);
+
+if (fres == FR_OK) {
+    // 测试写文�?
+    FIL file;
+    if (f_open(&file, "test8.txt", FA_CREATE_ALWAYS | FA_WRITE) == FR_OK) {
+        UINT bw;
+        f_write(&file, "F103 SD 1-bit OK!", 17, &bw);
+        f_close(&file);
+        printf("Write SUCCESS!\r\n");
+    }
+	else printf("Write fail\r\n");
+}
+fres = f_mount(&fs, "", 0);
+#endif
+// SD 1BIT END
+
+	
+	
+	// SD 4BIT START
+//	if (HAL_SD_GetCardInfo(&hsd, &CardInfo) == HAL_OK) {
+//		printf("Card Detected! Type: %d, Version: %d\r\n", CardInfo.CardType, CardInfo.CardVersion);
+//	} else {
+//		printf("GetCardInfo FAILED! ErrorCode: 0x%08d\r\n", hsd.ErrorCode);
+//	}
+
+//	// 现在调用 disk_initialize 并打印返回�??
+//	DRESULT res = disk_initialize(0);
+//	printf("disk_initialize result: %d ", res);
+//	if (res == RES_OK)       printf("(OK)\r\n");
+//	else if (res == RES_ERROR)   printf("(ERROR)\r\n");
+//	else if (res == RES_NOTRDY)  printf("(NOT READY)\r\n");
+//	else if (res == RES_PARERR)  printf("(PARERR error)\r\n");
+//	else printf("(UNKNOWN)\r\n");
+
+//	// 如果失败，再打印卡状�?
+//	HAL_SD_CardStateTypeDef state = HAL_SD_GetCardState(&hsd);
+//	printf("Current Card State: %d (0=IDLE, 4=TRANSFER normal)\r\n", state);
+
+//	// 再尝试挂�?
+//	fres = f_mount(&fs, "", 1);
+//	printf("Mount result: %d\r\n", fres);
+	// SD 4bit end
 		
 
 
@@ -307,18 +433,20 @@ printf("DNS : %d.%d.%d.%d\r\n",
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  printf("Hello, from ZET6\r\n");
+  // printf("Hello, from ZET6\r\n");
  	  // LibmodbusClientTest();
-
   while (1)
   {
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
 	   // LibmodbusClientTest();
-	  ModbusTCP_Server();
-	HAL_Delay(500);
+	  // ModbusTCP_Server();
+	
+
   }
+  	  
+
   /* USER CODE END 3 */
 }
 
@@ -366,7 +494,7 @@ void SystemClock_Config(void)
 
 /**
   * @brief  Modbus TCP 服务器主循环
-  *         监听 502 端口，接收请求 → 转发 RTU → 构造响应返回
+  *         监听 502 端口，接收请�? �? 转发 RTU �? 构�?�响应返�?
   */
 void ModbusTCP_Server(void)
 {
@@ -394,14 +522,14 @@ void ModbusTCP_Server(void)
             uint16_t rx_len = getSn_RX_RSR(sock);
             if (rx_len > 0)
             {
-                // 接收 Modbus TCP 请求帧
+                // 接收 Modbus TCP 请求�?
                 int32_t recv_len = recv(sock, tcp_rx_buf, MODBUS_TCP_MAX_ADU);
-                if (recv_len <= 7)  // 至少要有 MBAP 头 7 字节
+                if (recv_len <= 7)  // 至少要有 MBAP �? 7 字节
                 {
                     continue;
                 }
 
-                // 解析 MBAP 头
+                // 解析 MBAP �?
                 uint16_t transaction_id = (tcp_rx_buf[0] << 8) | tcp_rx_buf[1];
                 uint16_t protocol_id    = (tcp_rx_buf[2] << 8) | tcp_rx_buf[3];
                 uint16_t length         = (tcp_rx_buf[4] << 8) | tcp_rx_buf[5];
@@ -414,14 +542,14 @@ void ModbusTCP_Server(void)
                     continue;
                 }
 
-                // 提取 PDU（从第 7 字节开始）
+                // 提取 PDU（从�? 7 字节�?始）
                 uint8_t *pdu = &tcp_rx_buf[7];
                 uint16_t pdu_len = length - 1;  // 减去 unit_id
 
                 printf("Received Modbus TCP: TID=%04X, Unit=%d, PDU len=%d\r\n",
                        transaction_id, unit_id, pdu_len);
 
-                // 创建临时的 libmodbus RTU 上下文（只用于解析/构建 PDU）
+                // 创建临时�? libmodbus RTU 上下文（只用于解�?/构建 PDU�?
                 modbus_t *rtu_ctx = modbus_new_st_rtu("uart2", 9600, 'N', 8, 1);
                 if (rtu_ctx == NULL)
                 {
@@ -431,46 +559,46 @@ void ModbusTCP_Server(void)
 
                 modbus_set_slave(rtu_ctx, unit_id);
 				modbus_set_debug(rtu_ctx, TRUE);
-                modbus_set_response_timeout(rtu_ctx, 0, 600000);   // 500ms，与你 RTU 示例一致
+                modbus_set_response_timeout(rtu_ctx, 0, 600000);   // 500ms，与�? RTU 示例�?�?
                 modbus_set_byte_timeout(rtu_ctx, 0, 20000);
 				
 				
-				// 提取请求中的起始地址和数量（假设功能码 0x03 读保持寄存器）
-                if (pdu[0] == 0x03 && pdu_len >= 5)  // 功能码 + 地址(2B) + 数量(2B)
+				// 提取请求中的起始地址和数量（假设功能�? 0x03 读保持寄存器�?
+                if (pdu[0] == 0x03 && pdu_len >= 5)  // 功能�? + 地址(2B) + 数量(2B)
                 {
                     uint16_t start_addr = (pdu[1] << 8) | pdu[2];
                     uint16_t nb         = (pdu[3] << 8) | pdu[4];
 
-                    // 调用你熟悉的 modbus_read_registers（与 RTU 示例完全一样）
+                    // 调用你熟悉的 modbus_read_registers（与 RTU 示例完全�?样）
                     int rc = modbus_read_registers(rtu_ctx, start_addr, nb, sensor_vals);
 
                     printf("TCPrc = %d\r\n", rc);
 
                     if (rc == nb)  // 成功读取 nb 个寄存器
                     {
-                        // 构造响应 PDU
+                        // 构�?�响�? PDU
                         uint8_t resp_pdu[MODBUS_TCP_MAX_ADU];
                         uint16_t resp_pdu_len = 0;
 
-                        resp_pdu[resp_pdu_len++] = 0x03;             // 功能码
+                        resp_pdu[resp_pdu_len++] = 0x03;             // 功能�?
                         resp_pdu[resp_pdu_len++] = nb * 2;           // 字节计数
 
-                        // 填充数据（大端序）
+                        // 填充数据（大端序�?
                         for (int i = 0; i < nb; i++)
                         {
                             resp_pdu[resp_pdu_len++] = sensor_vals[i] >> 8;
                             resp_pdu[resp_pdu_len++] = sensor_vals[i] & 0xFF;
                         }
 
-                        // 构造完整 TCP 响应帧
+                        // 构�?�完�? TCP 响应�?
                         uint8_t resp_buf[MODBUS_TCP_MAX_ADU];
                         uint16_t resp_len = 0;
 
-                        // MBAP 头：复制请求的前 4 字节（TID + Protocol ID）
+                        // MBAP 头：复制请求的前 4 字节（TID + Protocol ID�?
                         memcpy(resp_buf, tcp_rx_buf, 4);
                         resp_len += 4;
 
-                        // Length = PDU长度 + 1（Unit ID）
+                        // Length = PDU长度 + 1（Unit ID�?
                         uint16_t mbap_len = resp_pdu_len + 1;
                         resp_buf[resp_len++] = mbap_len >> 8;
                         resp_buf[resp_len++] = mbap_len & 0xFF;
@@ -482,7 +610,7 @@ void ModbusTCP_Server(void)
                         memcpy(&resp_buf[resp_len], resp_pdu, resp_pdu_len);
                         resp_len += resp_pdu_len;
 
-                        // 发送响应（使用你提供的 send 函数）
+                        // 发�?�响应（使用你提供的 send 函数�?
                         send(sock, resp_buf, resp_len);
                         printf("Sent Modbus TCP response, len=%d\r\n", resp_len);
 							printf("Resp_buf: \r\n");
@@ -510,7 +638,7 @@ void ModbusTCP_Server(void)
 
 		}
 	}
-        // 处理连接状态变化
+        // 处理连接状�?�变�?
         uint8_t sr2 = getSn_SR(sock);
         if (sr2 == SOCK_CLOSE_WAIT || sr2 == SOCK_CLOSED || sr2 == SOCK_LAST_ACK)
         {
@@ -524,7 +652,7 @@ void ModbusTCP_Server(void)
 	}
 }
 
-// Modbus TCP Slave 任务（放在主循环或独立任务中）
+// Modbus TCP Slave 任务（放在主循环或独立任务中�?
 //void ModbusTCPSlaveTask(void)
 //{
 //    // 创建 TCP Slave，监听所有接口，端口 502
@@ -544,15 +672,15 @@ void ModbusTCP_Server(void)
 //        return;
 //    }
 
-//    // 把传感器数据映射到保持寄存器（例如地址 0=温度, 1=湿度）
+//    // 把传感器数据映射到保持寄存器（例如地�? 0=温度, 1=湿度�?
 //    while (1)
 //    {
-//        // 实时更新缓存到 Modbus 寄存器
+//        // 实时更新缓存�? Modbus 寄存�?
 //        mb_mapping->tab_registers[0] = g_sensor_temp;   // 温度 ×10
 //        mb_mapping->tab_registers[1] = g_sensor_humi;   // 湿度 ×10
 
-//        // 监听并处理一个 TCP 连接
-//        int sock = modbus_tcp_listen(mb_tcp_ctx, 1);  // 监听，允许 1 个连接
+//        // 监听并处理一�? TCP 连接
+//        int sock = modbus_tcp_listen(mb_tcp_ctx, 1);  // 监听，允�? 1 个连�?
 //        if (sock == -1)
 //        {
 //            printf("Modbus TCP listen failed: %s\r\n", modbus_strerror(errno));
@@ -561,31 +689,31 @@ void ModbusTCP_Server(void)
 
 //        modbus_tcp_accept(mb_tcp_ctx, &sock);  // 接受连接
 
-//        // 循环处理请求（直到客户端断开）
+//        // 循环处理请求（直到客户端断开�?
 //        while (1)
 //        {
 //            uint8_t query[MODBUS_TCP_MAX_ADU_LENGTH];
 //            int rc = modbus_receive(mb_tcp_ctx, query);
 //            if (rc > 0)
 //            {
-//                // 处理请求并回复
+//                // 处理请求并回�?
 //                modbus_reply(mb_tcp_ctx, query, rc, mb_mapping);
 //            }
 //            else if (rc == -1)
 //            {
-//                // 客户端断开或错误
+//                // 客户端断�?或错�?
 //                break;
 //            }
 //        }
 
-//        modbus_close(mb_tcp_ctx);  // 关闭当前连接，继续监听下一个
+//        modbus_close(mb_tcp_ctx);  // 关闭当前连接，继续监听下�?�?
 //    }
 
 //    // 清理（正常不会走到这里）
 //    modbus_mapping_free(mb_mapping);
 //    modbus_free(mb_tcp_ctx);
 //}
-// 判断 W5500 就绪的轮询函数
+// 判断 W5500 就绪的轮询函�?
 uint8_t W5500_WaitReady(uint16_t timeout_ms)
 {
     uint32_t start = HAL_GetTick();
@@ -593,12 +721,12 @@ uint8_t W5500_WaitReady(uint16_t timeout_ms)
 
     while (HAL_GetTick() - start < timeout_ms)
     {
-        version = getVERSIONR();  // 读取 VERSIONR 寄存器
+        version = getVERSIONR();  // 读取 VERSIONR 寄存�?
         if (version == 0x04)
         {
             return 1;  // 就绪成功
         }
-        HAL_Delay(1);  // 短延时重试
+        HAL_Delay(1);  // 短延时重�?
     }
     return 0;  // 超时失败
 }
