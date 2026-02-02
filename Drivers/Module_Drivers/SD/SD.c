@@ -91,7 +91,7 @@ void formatSDCard(FRESULT *fr, uint8_t *buffer, UINT len ) {
      * check if formatting was succesful
      */
 //    if ((*fr = f_mkfs((TCHAR
-//            const * ) SDPath, FM_ANY, 0, buffer, len)) != FR_OK) {
+//            const * ) SDPath, 0x07, 0, buffer, len)) != FR_OK) {
 //        //TODO: Error Handling
 //        //Error_Handler();
 //    }

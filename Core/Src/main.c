@@ -125,7 +125,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
         // ??:?? LED?????????
 		HAL_GPIO_WritePin(LED_R_GPIO_Port, LED_R_Pin, GPIO_PIN_RESET);
 		// HAL_GPIO_TogglePin(LED_R_GPIO_Port,LED_R_Pin);
-		printf("keep going from ZET6.\r\n");
+		printf("keep going from ZET6(%d).\r\n",HAL_GetUIDw0()&0xff);
 		// HAL_GPIO_TogglePin(GPIOC,GPIO_PIN_5);
 		HAL_GPIO_WritePin(LED_R_GPIO_Port, LED_R_Pin, GPIO_PIN_SET);
 
@@ -733,6 +733,18 @@ uint8_t W5500_WaitReady(uint16_t timeout_ms)
 
 void Load_Net_Parameters(void)
 {
+	uint32_t uid[3];
+	uid[0] = HAL_GetUIDw0();
+	// printf("uid[0]: %d\r\n",uid[0]);
+	uid[1] = HAL_GetUIDw1();
+	// printf("uid[1]: %d\r\n",uid[1]);
+
+	// uid[2] = (HAL_GetUIDw2());
+	// printf("uid[2]: %d\r\n",uid[2]);
+	
+	uid[2] = uid[0] ^ uid[1];
+	// uint32_t mix = *(uint32_t*)&uid[0]
+	// printf("UID: %02x %02x %02x\r\n",(uid[3] >> 16) & 0xFF,(uid[3] >> 8) & 0xFF,uid[3] & 0xFF);
 	gWIZNETINFO.gw[0] = 192; //Gateway
 	gWIZNETINFO.gw[1] = 168;
 	gWIZNETINFO.gw[2] = 99;
@@ -743,12 +755,12 @@ void Load_Net_Parameters(void)
 	gWIZNETINFO.sn[2]=255;
 	gWIZNETINFO.sn[3]=0;
 
-	gWIZNETINFO.mac[0]=0x0c; //MAC
+	gWIZNETINFO.mac[0]=0x06; //MAC
 	gWIZNETINFO.mac[1]=0x29;
 	gWIZNETINFO.mac[2]=0xab;
-	gWIZNETINFO.mac[3]=0x7c;
-	gWIZNETINFO.mac[4]=0x00;
-	gWIZNETINFO.mac[5]=0x12;
+	gWIZNETINFO.mac[3]=(uid[2] >> 16) & 0xFF;
+	gWIZNETINFO.mac[4]=(uid[2] >> 8) & 0xFF;
+	gWIZNETINFO.mac[5]=uid[2] & 0xFF;
 
 	gWIZNETINFO.ip[0]=192; //IP
 	gWIZNETINFO.ip[1]=168;
